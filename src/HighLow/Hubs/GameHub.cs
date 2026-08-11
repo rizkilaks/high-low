@@ -98,6 +98,9 @@ public sealed class GameHub : Hub
         var (ok, error, view, events) = await room.ReconnectAsync(token, _clock.UtcNow);
         if (!ok) { await SendRejectedAsync(error!); return null; }
 
+        await Groups.AddToGroupAsync(Context.ConnectionId, RoomGroup(roomCode));
+        Connections[Context.ConnectionId] = (roomCode, seat);
+
         Metrics.Reconnects++;
         await PushToRoomAsync(roomCode, events);
         return view;

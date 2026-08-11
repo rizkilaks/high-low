@@ -27,9 +27,22 @@ const LS_SEAT = "hl-seat";
 let playerName = localStorage.getItem(LS_NAME) ?? "";
 let state = initialState("", 0, "");
 let conn!: HubConnection;
+let startPromise: Promise<boolean> | null = null;
 
 function el(id: string): HTMLElement {
     return document.getElementById(id)!;
+}
+
+function ensureStarted(): Promise<boolean> {
+    if (conn.state === signalR.HubConnectionState.Connected) return Promise.resolve(true);
+    if (conn.state === signalR.HubConnectionState.Reconnecting) return Promise.resolve(false);
+    if (!startPromise) {
+        startPromise = conn.start()
+            .then(() => true)
+            .catch(() => false)
+            .finally(() => { startPromise = null; });
+    }
+    return startPromise;
 }
 
 function clearStored(): void {
@@ -57,6 +70,7 @@ function render(): void {
 }
 
 async function tryReconnect(): Promise<void> {
+    if (!(await ensureStarted())) return;
     const room = localStorage.getItem(LS_ROOM);
     const token = localStorage.getItem(LS_TOKEN);
     const seat = Number(localStorage.getItem(LS_SEAT) ?? "-1");
@@ -78,6 +92,7 @@ async function tryReconnect(): Promise<void> {
 async function enterRoom(promise: Promise<JoinedRoom | null>, name: string): Promise<void> {
     const joined = await promise;
     if (!joined) {
+        clearStored();
         toast("could not join");
         return;
     }
@@ -120,19 +135,31 @@ function wireButtons(): void {
     const inputName = () => nameInput.value.trim() || playerName;
 
     el("btn-create").addEventListener("click", () => {
-        void enterRoom(conn.invoke<JoinedRoom | null>("createRoom", inputName(), publicCheck.checked), inputName());
+        void (async () => {
+            if (!(await ensureStarted())) return;
+            await enterRoom(conn.invoke<JoinedRoom | null>("createRoom", inputName(), publicCheck.checked), inputName());
+        })();
     });
     el("btn-join").addEventListener("click", () => {
         const code = codeInput.value.trim();
         if (!code) return;
-        void enterRoom(conn.invoke<JoinedRoom | null>("joinRoom", code, inputName()), inputName());
+        void (async () => {
+            if (!(await ensureStarted())) return;
+            await enterRoom(conn.invoke<JoinedRoom | null>("joinRoom", code, inputName()), inputName());
+        })();
     });
     el("btn-quick").addEventListener("click", () => {
-        void enterRoom(conn.invoke<JoinedRoom | null>("quickMatch", inputName()), inputName());
+        void (async () => {
+            if (!(await ensureStarted())) return;
+            await enterRoom(conn.invoke<JoinedRoom | null>("quickMatch", inputName()), inputName());
+        })();
     });
 
     el("btn-start").addEventListener("click", () => {
-        void conn.invoke("startWithBots", state.roomCode, state.myToken);
+        void (async () => {
+            if (!(await ensureStarted())) return;
+            await conn.invoke("startWithBots", state.roomCode, state.myToken).catch(() => false);
+        })();
     });
 
     const passBtn = el("btn-pass") as HTMLButtonElement;
@@ -141,16 +168,18 @@ function wireButtons(): void {
     revBtn.addEventListener("click", () => { setReverse(!getReverse()); render(); });
 
     el("btn-submit").addEventListener("click", () => {
-        const card = getSelectedCard();
-        if (card == null) return;
-        const special = getReverse() ? "Reverse" : "Normal";
-        void conn.invoke<boolean>("submit", state.roomCode, state.myToken, card, special, getPass()).then((ok: boolean) => {
+        void (async () => {
+            if (!(await ensureStarted())) return;
+            const card = getSelectedCard();
+            if (card == null) return;
+            const special = getReverse() ? "Reverse" : "Normal";
+            const ok = await conn.invoke<boolean>("submit", state.roomCode, state.myToken, card, special, getPass()).catch(() => false);
             if (ok) {
                 submitOptimistic(state, card);
                 clearSelection();
                 render();
             }
-        });
+        })();
     });
 
     el("btn-leave").addEventListener("click", () => {
@@ -163,7 +192,10 @@ function wireButtons(): void {
     });
 
     onGiftChoice(target => {
-        void conn.invoke("chooseGift", state.roomCode, state.myToken, target);
+        void (async () => {
+            if (!(await ensureStarted())) return;
+            await conn.invoke("chooseGift", state.roomCode, state.myToken, target).catch(() => false);
+        })();
     });
 }
 
@@ -182,6 +214,11 @@ async function boot(): Promise<void> {
     conn.onreconnected(() => { setConnBanner(false, ""); void tryReconnect(); });
     wireEvents();
     wireButtons();
+
+    if (!(await ensureStarted())) {
+        toast("cannot connect — reload to retry");
+        return;
+    }
 
     const room = localStorage.getItem(LS_ROOM);
     const token = localStorage.getItem(LS_TOKEN);

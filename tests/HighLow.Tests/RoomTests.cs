@@ -48,6 +48,8 @@ public class RoomTests
         var next = events.OfType<RoundStartedEvent>().Last();
         Assert.Equal(clock.UtcNow.ToUnixTimeMilliseconds() + Room.SubmitPhaseMs, next.PhaseDeadlineUtcMs);
         Assert.Equal(4, next.Seats.Count);
+        Assert.Equal(9, next.Seats[0].HandCount);
+        Assert.Null((await room.ViewAsync(0)).WinnerSeats);
         Assert.Equal(2, next.Round);
         Assert.Equal(2, room.Round);
         Assert.Equal(1, room.StartSeat);
@@ -165,6 +167,7 @@ public class RoomTests
         Assert.Equal(new[] { 0, 1 }, events.OfType<GiftPromptEvent>().Single().TargetSeats);
         Assert.Equal(clock.UtcNow.ToUnixTimeMilliseconds() + Room.GiftPhaseMs,
             events.OfType<GiftPromptEvent>().Single().PhaseDeadlineUtcMs);
+        Assert.Equal(new[] { 0, 1 }, (await room.ViewAsync(3)).GiftTargets);
 
         var notWinner = await room.ChooseGiftAsync(0, 1, clock.UtcNow);
         Assert.False(notWinner.Ok);

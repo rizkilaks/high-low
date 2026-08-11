@@ -93,8 +93,11 @@ function applyScores(state: GameState, scores: ScoreLine[]): void {
     }
 }
 
-export function applyEvent(state: GameState, evt: { name: string; payload: any }): Reaction {
-    const log = (msg: string) => state.log.push(msg);
+export function applyEvent(state: GameState, evt: { name: string; payload: unknown }): Reaction {
+    const log = (msg: string) => {
+        state.log.push(msg);
+        if (state.log.length > 200) state.log.splice(0, state.log.length - 200);
+    };
     switch (evt.name) {
         case "lobbyState": {
             const p = evt.payload as LobbyStateEvent;
@@ -150,6 +153,7 @@ export function applyEvent(state: GameState, evt: { name: string; payload: any }
             state.giftTargetSeat = p.giftTargetSeat;
             state.burnedPrize = p.burnedPrize;
             state.deadlineMs = null;
+            state.giftTargets = [];
             applyScores(state, p.scores);
             if (p.winnerSeat != null) {
                 const card = p.winnerCardValue != null ? `card ${p.winnerCardValue}` : "(hidden)";
@@ -216,7 +220,6 @@ export function applyView(state: GameState, view: RoomView): Reaction {
     state.winnerSeats = view.winnerSeats ?? [];
     state.revealed = [];
     state.voidedSeats = [];
-    state.mySubmitted = false;
     state.log.push("reconnected");
     return view.phase === "Finished" ? { overlay: "finished" } : {};
 }

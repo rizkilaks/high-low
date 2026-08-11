@@ -19,7 +19,10 @@ function el(id: string): HTMLElement {
 }
 
 function rerender(): void {
-    if (current) renderTable(current.state, current.mySeat, current.myName);
+    if (current) {
+        renderTable(current.state, current.mySeat, current.myName);
+        if (current.state.revealed.length > 0) renderReveal(current.state);
+    }
 }
 
 export function showScreen(name: "lobby" | "table"): void {
@@ -180,7 +183,7 @@ export function renderReveal(state: GameState): void {
 
 export function showGiftPrompt(state: GameState): void {
     const overlay = el("overlay-gift");
-    const visible = state.phase === "GiftDecision" && state.mySeat === state.winnerSeat;
+    const visible = state.phase === "GiftDecision" && state.mySeat === state.winnerSeat && state.deadlineMs != null;
     overlay.classList.toggle("hidden", !visible);
     if (!visible) return;
     const wrap = el("gift-targets");

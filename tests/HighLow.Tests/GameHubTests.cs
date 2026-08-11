@@ -125,6 +125,39 @@ public class GameHubTests
     }
 
     [Fact]
+    public async Task Reconnected_guest_keeps_receiving_room_events()
+    {
+        await using var ctx = new HubTestContext();
+        ctx.Bots.Enqueue(7, 8);
+        await using var host = await ctx.ConnectAsync("host");
+        await using var guest = await ctx.ConnectAsync("guest");
+        var sinkH = new EventSink(host);
+        var sinkG = new EventSink(guest);
+
+        var created = await host.InvokeAsync<JoinedRoom>("CreateRoom", "host", true);
+        var joined = await guest.InvokeAsync<JoinedRoom>("JoinRoom", created!.RoomCode, "guest");
+        Assert.True(await host.InvokeAsync<bool>("StartWithBots", created.RoomCode, created.Token));
+        Assert.True(await host.InvokeAsync<bool>("Submit", created.RoomCode, created.Token, 5, Special.Normal, false));
+        Assert.True(await guest.InvokeAsync<bool>("Submit", created.RoomCode, joined!.Token, 6, Special.Normal, false));
+        await sinkH.WaitCountAsync<RoundResolvedEvent>(1);
+        await sinkG.WaitCountAsync<RoundResolvedEvent>(1);
+        await sinkH.WaitCountAsync<RoundStartedEvent>(2);
+        await sinkG.WaitCountAsync<RoundStartedEvent>(2);
+
+        await guest.DisposeAsync();
+        await using var guest2 = await ctx.ConnectAsync("guest2");
+        var sinkG2 = new EventSink(guest2);
+
+        var view = await guest2.InvokeAsync<RoomView>("Reconnect", created.RoomCode, joined.Token);
+        Assert.NotNull(view);
+        Assert.Equal(9, view!.MyHand.Count);
+
+        Assert.True(await host.InvokeAsync<bool>("Submit", created.RoomCode, created.Token, 7, Special.Normal, false));
+        Assert.True(await guest2.InvokeAsync<bool>("Submit", created.RoomCode, joined.Token, 8, Special.Normal, false));
+        await sinkG2.WaitCountAsync<RoundResolvedEvent>(1);
+    }
+
+    [Fact]
     public async Task Index_html_is_served()
     {
         await using var ctx = new HubTestContext();
