@@ -165,8 +165,6 @@ public sealed class Room
             var seat = _seats.FindIndex(s => s.Token == token);
             if (seat < 0) return (false, "unknown token", null, DrainOutbox());
 
-            if (Phase == RoomPhase.Finished) return (false, "game over", null, DrainOutbox());
-
             var s = _seats[seat];
             s.Connected = true;
             s.BotControlled = false;

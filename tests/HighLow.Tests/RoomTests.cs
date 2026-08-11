@@ -313,5 +313,9 @@ public class RoomTests
         Assert.Equal(2, finished.WinnerSeats.Count);
         var view = await room.ViewAsync(0);
         Assert.Equal(2, view.WinnerSeats!.Count);
+
+        var reconnect = await room.ReconnectAsync("ta", clock.UtcNow);
+        Assert.True(reconnect.Ok);
+        Assert.Equal(2, reconnect.View!.WinnerSeats!.Count);
     }
 }
