@@ -18,6 +18,7 @@ export interface SeatInfo {
     tieMax: number;
     reverseLeft: number;
     handCount: number;
+    hasSubmitted: boolean;
 }
 
 export interface LobbyStateEvent {

@@ -38,6 +38,7 @@ public class RoomTests
         var room = await HumanRoom(clock);
         var events = new List<object>();
         events.AddRange((await room.SubmitAsync(0, 1, Special.Normal, false, clock.UtcNow)).Events);
+        Assert.True((await room.ViewAsync(1)).Seats[0].HasSubmitted);
         events.AddRange((await room.SubmitAsync(1, 2, Special.Normal, false, clock.UtcNow)).Events);
         events.AddRange((await room.SubmitAsync(2, 3, Special.Normal, false, clock.UtcNow)).Events);
         events.AddRange((await room.SubmitAsync(3, 4, Special.Normal, false, clock.UtcNow)).Events);
@@ -50,6 +51,7 @@ public class RoomTests
         Assert.Equal(4, next.Seats.Count);
         Assert.Equal(9, next.Seats[0].HandCount);
         Assert.Null((await room.ViewAsync(0)).WinnerSeats);
+        Assert.False((await room.ViewAsync(0)).Seats[0].HasSubmitted);
         Assert.Equal(2, next.Round);
         Assert.Equal(2, room.Round);
         Assert.Equal(1, room.StartSeat);

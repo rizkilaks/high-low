@@ -241,7 +241,7 @@ public sealed class Room
     }
 
     private SeatInfo[] SeatsInfo() => _seats.Select(s => new SeatInfo(s.Name, s.IsBot, s.BotControlled, s.Connected,
-        s.Score, s.TieAbs, s.TieMax, s.ReverseLeft, s.Hand.Count)).ToArray();
+        s.Score, s.TieAbs, s.TieMax, s.ReverseLeft, s.Hand.Count, s.HasSubmitted)).ToArray();
 
     private RoomView GetViewLocked(int selfSeat)
     {

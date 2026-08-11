@@ -3,7 +3,7 @@ using HighLow.Domain;
 namespace HighLow.Game;
 
 public sealed record SeatInfo(string Name, bool IsBot, bool BotControlled, bool Connected,
-    int Score, int TieAbs, int TieMax, int ReverseLeft, int HandCount);
+    int Score, int TieAbs, int TieMax, int ReverseLeft, int HandCount, bool HasSubmitted);
 
 public sealed record LobbyStateEvent(string RoomCode, IReadOnlyList<SeatInfo> Seats, bool CanStart);
 public sealed record GameStartedEvent(IReadOnlyList<SeatInfo> Seats, int StartSeat);

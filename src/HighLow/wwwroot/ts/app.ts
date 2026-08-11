@@ -79,6 +79,7 @@ async function tryReconnect(): Promise<void> {
     if (view) {
         state = initialState(view.roomCode, seat, token);
         const reaction = applyView(state, view);
+        clearSelection();
         render();
         if (reaction.toast) toast(reaction.toast);
     } else {

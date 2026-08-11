@@ -218,6 +218,7 @@ export function applyView(state: GameState, view: RoomView): Reaction {
     state.myHand = view.myHand;
     state.giftTargets = view.giftTargets ?? [];
     state.winnerSeats = view.winnerSeats ?? [];
+    state.mySubmitted = view.seats[state.mySeat]?.hasSubmitted ?? false;
     state.revealed = [];
     state.voidedSeats = [];
     state.log.push("reconnected");
