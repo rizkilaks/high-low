@@ -90,7 +90,7 @@ async function tryReconnect(): Promise<void> {
 }
 
 async function enterRoom(promise: Promise<JoinedRoom | null>, name: string): Promise<void> {
-    const joined = await promise;
+    const joined = await promise.catch(() => null);
     if (!joined) {
         clearStored();
         toast("could not join");
