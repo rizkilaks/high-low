@@ -1,8 +1,8 @@
 namespace HighLow.Game;
 
-public sealed record JoinResult(bool Ok, string? Error, Room? Room, int Seat, string Token)
+public sealed record JoinResult(bool Ok, string? Error, Room? Room, int Seat, string Token, IReadOnlyList<object> Events)
 {
-    public static JoinResult Fail(string error) => new(false, error, null, -1, "");
+    public static JoinResult Fail(string error) => new(false, error, null, -1, "", Array.Empty<object>());
 }
 
 public sealed class RoomManager
@@ -12,6 +12,8 @@ public sealed class RoomManager
     public const long FinishedTtlMs = 30 * 60_000;
     private const string Alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
+    public static int CountRooms;
+    public static int CountPlayers;
     private readonly SemaphoreSlim _gate = new(1, 1);
     private readonly Random _rng;
     private readonly IBotStrategy _bots;
@@ -30,8 +32,10 @@ public sealed class RoomManager
         try
         {
             if (CountRoomsForIp(ip) >= MaxRoomsPerIp) return JoinResult.Fail("too many rooms from this address");
+
             var code = requestedCode?.ToUpperInvariant() ?? NewCodeLocked();
             if (_rooms.ContainsKey(code)) return JoinResult.Fail("code already taken");
+
             return await CreateAndJoinLockedAsync(code, name, ip, isPublic, now);
         }
         finally { _gate.Release(); }
@@ -43,8 +47,11 @@ public sealed class RoomManager
         try
         {
             if (CountRoomsForIp(ip) >= MaxRoomsPerIp) return JoinResult.Fail("too many rooms from this address");
+
             if (!_rooms.TryGetValue(code.ToUpperInvariant(), out var room)) return JoinResult.Fail("room not found");
+
             if (room.Phase != RoomPhase.Lobby || room.Seats.Count >= 4) return JoinResult.Fail("room full or already started");
+
             return await AddHumanLockedAsync(room, name, ip, now);
         }
         finally { _gate.Release(); }
@@ -56,8 +63,10 @@ public sealed class RoomManager
         try
         {
             if (CountRoomsForIp(ip) >= MaxRoomsPerIp) return JoinResult.Fail("too many rooms from this address");
+
             var room = _rooms.Values.FirstOrDefault(r => r.IsPublic && r.Phase == RoomPhase.Lobby && r.Seats.Count < 4);
             if (room is not null) return await AddHumanLockedAsync(room, name, ip, now);
+
             var code = NewCodeLocked();
             return await CreateAndJoinLockedAsync(code, name, ip, isPublic: true, now);
         }
@@ -87,6 +96,8 @@ public sealed class RoomManager
                 {
                     _rooms.Remove(room.Code);
                     _ipsByRoom.Remove(room);
+                    CountRooms--;
+                    CountPlayers -= room.Seats.Count(s => !s.IsBot);
                     closed.Add(room);
                 }
             }
@@ -114,14 +125,16 @@ public sealed class RoomManager
         var room = new Room(code, _rng, _bots, isPublic, token);
         _rooms[code] = room;
         _ipsByRoom[room] = new HashSet<string>();
-        return await AddHumanLockedAsync(room, name, ip, now);
+        CountRooms++;
+        return await AddHumanLockedAsync(room, name, ip, now, token);
     }
 
-    private async Task<JoinResult> AddHumanLockedAsync(Room room, string name, string ip, DateTimeOffset now)
+    private async Task<JoinResult> AddHumanLockedAsync(Room room, string name, string ip, DateTimeOffset now, string? tokenOverride = null)
     {
-        var token = Guid.NewGuid().ToString("N");
-        var (seat, _) = await room.AddHumanAsync(name, token, now);
+        var token = tokenOverride ?? Guid.NewGuid().ToString("N");
+        var (seat, events) = await room.AddHumanAsync(name, token, now);
         _ipsByRoom[room].Add(ip);
-        return new JoinResult(true, null, room, seat, token);
+        CountPlayers++;
+        return new JoinResult(true, null, room, seat, token, events);
     }
 }
