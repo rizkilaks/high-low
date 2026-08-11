@@ -51,6 +51,9 @@ export function renderLobbySeats(state: GameState): void {
 
 export function renderTable(state: GameState, mySeat: number, myName: string): void {
     current = { state, mySeat, myName };
+    const codeLabel = el("room-code-label");
+    codeLabel.classList.toggle("hidden", !state.roomCode);
+    codeLabel.textContent = state.roomCode ? `Room ${state.roomCode}` : "";
     el("round-label").textContent = state.round > 0 ? `Round ${state.round} / ${state.totalRounds}` : "High and Low";
     const prizeEl = el("prize");
     prizeEl.textContent = state.prize != null ? (state.prize > 0 ? `+${state.prize}` : String(state.prize)) : "";
@@ -141,13 +144,11 @@ function renderControls(state: GameState, mySeat: number): void {
     passBtn.textContent = pass ? "Pass ✓" : "Pass";
     passBtn.classList.toggle("selected", pass);
     passBtn.disabled = !canSubmit || forced;
-    passBtn.addEventListener("click", () => { setPass(!getPass()); rerender(); });
 
     const revBtn = el("btn-reverse") as HTMLButtonElement;
     revBtn.textContent = `Reverse (${revLeft})`;
     revBtn.classList.toggle("selected", reverse);
     revBtn.disabled = !canSubmit || revLeft <= 0;
-    revBtn.addEventListener("click", () => { setReverse(!getReverse()); rerender(); });
 
     const subBtn = el("btn-submit") as HTMLButtonElement;
     subBtn.disabled = !canSubmit || selectedCard == null;

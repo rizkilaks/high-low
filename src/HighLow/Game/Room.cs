@@ -49,6 +49,7 @@ public sealed class Room
     private List<int> _voidedThisRound = new();
     private Dictionary<int, Submission> _submissions = new();
     private long _deadlineUtcMs;
+    private IReadOnlyList<int>? _finishedWinners;
 
     private List<int> Shuffle(List<int> src)
     {
@@ -249,7 +250,9 @@ public sealed class Room
         var mine = _seats[selfSeat].IsBot ? Array.Empty<int>() : _seats[selfSeat].Hand.ToArray();
         return new RoomView(Code, Phase, Round, TotalRounds,
             _prize, _direction, _winnerSeat, _winnerCardVisible, _giftTargetSeat, _burnedPrize,
-            StartSeat, _forcedReveal.ToArray(), _hiddenWinnerCard, _deadlineUtcMs, SeatsInfo(), mine);
+            StartSeat, _forcedReveal.ToArray(), _hiddenWinnerCard, _deadlineUtcMs, SeatsInfo(), mine,
+            Phase == RoomPhase.Finished ? _finishedWinners : null,
+            Phase == RoomPhase.GiftDecision ? _voidedThisRound.ToArray() : null);
     }
 
     private void BeginRoundLocked(DateTimeOffset now)
@@ -270,7 +273,7 @@ public sealed class Room
         _deadlineUtcMs = NowMs(now) + SubmitPhaseMs;
         Touch(now);
         Push(new RoundStartedEvent(Round, TotalRounds, _prize.Value, StartSeat,
-            _forcedReveal.ToArray(), _hiddenWinnerCard, _deadlineUtcMs));
+            _forcedReveal.ToArray(), _hiddenWinnerCard, _deadlineUtcMs, SeatsInfo()));
         _hiddenWinnerCard = null;
 
         BotSubmitsLocked();
@@ -330,7 +333,7 @@ public sealed class Room
         {
             Phase = RoomPhase.GiftDecision;
             _deadlineUtcMs = NowMs(now) + GiftPhaseMs;
-            Push(new GiftPromptEvent(resolution.VoidedSeats));
+            Push(new GiftPromptEvent(resolution.VoidedSeats, _deadlineUtcMs));
             return DrainOutbox();
         }
 
@@ -359,6 +362,7 @@ public sealed class Room
             Phase = RoomPhase.Finished;
             var winners = GameScores.RankWinners(
                 _seats.Select((s, i) => new PlayerStanding(i, s.Score, s.TieAbs, s.TieMax)).ToArray(), 2);
+            _finishedWinners = winners;
             Push(new GameFinishedEvent(winners,
                 _seats.Select((s, i) => new ScoreLine(i, s.Score, s.TieAbs, s.TieMax)).ToArray()));
         }

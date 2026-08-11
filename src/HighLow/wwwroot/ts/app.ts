@@ -15,8 +15,8 @@ import type {
 import { applyEvent, applyView, initialState, submitOptimistic, type GameState } from "./state.js";
 import {
     clearSelection, getPass, getReverse, getSelectedCard, onGiftChoice,
-    renderLobbySeats, renderReveal, renderTable, setConnBanner, showFinished,
-    showGiftPrompt, showScreen, toast,
+    renderLobbySeats, renderReveal, renderTable, setConnBanner, setPass, setReverse,
+    showFinished, showGiftPrompt, showScreen, toast,
 } from "./ui.js";
 
 const LS_NAME = "hl-name";
@@ -64,8 +64,9 @@ async function tryReconnect(): Promise<void> {
     const view = await conn.invoke<RoomView | null>("reconnect", room, token).catch(() => null);
     if (view) {
         state = initialState(view.roomCode, seat, token);
-        applyView(state, view);
+        const reaction = applyView(state, view);
         render();
+        if (reaction.toast) toast(reaction.toast);
     } else {
         clearStored();
         state = initialState("", 0, "");
@@ -76,7 +77,10 @@ async function tryReconnect(): Promise<void> {
 
 async function enterRoom(promise: Promise<JoinedRoom | null>, name: string): Promise<void> {
     const joined = await promise;
-    if (!joined) return;
+    if (!joined) {
+        toast("could not join");
+        return;
+    }
     playerName = name;
     localStorage.setItem(LS_NAME, name);
     localStorage.setItem(LS_ROOM, joined.roomCode);
@@ -106,7 +110,6 @@ function wireEvents(): void {
         state = initialState("", 0, "");
         showScreen("lobby");
         renderLobbySeats(state);
-        renderTable(state, state.mySeat, playerName);
     });
 }
 
@@ -132,6 +135,11 @@ function wireButtons(): void {
         void conn.invoke("startWithBots", state.roomCode, state.myToken);
     });
 
+    const passBtn = el("btn-pass") as HTMLButtonElement;
+    passBtn.addEventListener("click", () => { setPass(!getPass()); render(); });
+    const revBtn = el("btn-reverse") as HTMLButtonElement;
+    revBtn.addEventListener("click", () => { setReverse(!getReverse()); render(); });
+
     el("btn-submit").addEventListener("click", () => {
         const card = getSelectedCard();
         if (card == null) return;
@@ -146,6 +154,8 @@ function wireButtons(): void {
     });
 
     el("btn-leave").addEventListener("click", () => {
+        // ponytail: no server leave call — socket stays connected; the 60s disconnect
+        // grace only bot-takes-over the seat if the socket actually closes. Acceptable for now.
         clearStored();
         state = initialState("", 0, "");
         showScreen("lobby");

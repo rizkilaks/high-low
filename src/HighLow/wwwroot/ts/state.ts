@@ -118,6 +118,7 @@ export function applyEvent(state: GameState, evt: { name: string; payload: any }
             state.startSeat = p.startSeat;
             state.forcedRevealSeats = p.forcedRevealSeats;
             state.deadlineMs = p.phaseDeadlineUtcMs;
+            state.seats = p.seats.map(toSeatState);
             state.revealed = [];
             state.voidedSeats = [];
             state.mySubmitted = false;
@@ -162,7 +163,7 @@ export function applyEvent(state: GameState, evt: { name: string; payload: any }
         case "giftPrompt": {
             const p = evt.payload as GiftPromptEvent;
             state.giftTargets = p.targetSeats;
-            state.deadlineMs = Date.now() + 15000;
+            state.deadlineMs = p.phaseDeadlineUtcMs;
             state.phase = "GiftDecision";
             log("gift choice");
             return { overlay: "gift" };
@@ -189,17 +190,13 @@ export function applyEvent(state: GameState, evt: { name: string; payload: any }
             log(`${evt.name} — ${seatName(state, p.seat)} (${p.status})`);
             break;
         }
-        case "roomClosed": {
-            log(`room ${state.roomCode} closed`);
-            break;
-        }
         case "rejectedMessage":
             return { toast: evt.payload as string };
     }
     return {};
 }
 
-export function applyView(state: GameState, view: RoomView): void {
+export function applyView(state: GameState, view: RoomView): Reaction {
     state.roomCode = view.roomCode;
     state.phase = view.phase;
     state.round = view.round;
@@ -215,10 +212,13 @@ export function applyView(state: GameState, view: RoomView): void {
     state.deadlineMs = view.phaseDeadlineUtcMs;
     state.seats = view.seats.map(toSeatState);
     state.myHand = view.myHand;
+    state.giftTargets = view.giftTargets ?? [];
+    state.winnerSeats = view.winnerSeats ?? [];
     state.revealed = [];
     state.voidedSeats = [];
     state.mySubmitted = false;
     state.log.push("reconnected");
+    return view.phase === "Finished" ? { overlay: "finished" } : {};
 }
 
 export function submitOptimistic(state: GameState, card: number): void {

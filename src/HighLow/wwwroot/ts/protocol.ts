@@ -39,6 +39,7 @@ export interface RoundStartedEvent {
     forcedRevealSeats: number[];
     hiddenWinnerCardValue: number | null;
     phaseDeadlineUtcMs: number;
+    seats: SeatInfo[];
 }
 
 export interface SpecialsRevealedEvent {
@@ -75,6 +76,7 @@ export interface RoundResolvedEvent {
 
 export interface GiftPromptEvent {
     targetSeats: number[];
+    phaseDeadlineUtcMs: number;
 }
 
 export interface GameFinishedEvent {
@@ -104,4 +106,6 @@ export interface RoomView {
     phaseDeadlineUtcMs: number;
     seats: SeatInfo[];
     myHand: number[];
+    winnerSeats: number[] | null;
+    giftTargets: number[] | null;
 }
