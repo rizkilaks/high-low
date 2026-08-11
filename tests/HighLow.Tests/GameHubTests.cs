@@ -125,6 +125,15 @@ public class GameHubTests
     }
 
     [Fact]
+    public async Task Index_html_is_served()
+    {
+        await using var ctx = new HubTestContext();
+        var index = await ctx.Http.GetAsync("/");
+        Assert.Equal(System.Net.HttpStatusCode.OK, index.StatusCode);
+        Assert.Contains("highlow", await index.Content.ReadAsStringAsync());
+    }
+
+    [Fact]
     public async Task Metrics_endpoint_reports_live_counters()
     {
         await using var ctx = new HubTestContext();

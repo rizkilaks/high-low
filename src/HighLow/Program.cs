@@ -4,7 +4,8 @@ using HighLow.Hubs;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddHealthChecks();
-builder.Services.AddSignalR();
+builder.Services.AddSignalR().AddJsonProtocol(o =>
+    o.PayloadSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
 builder.Services.AddSingleton<IClock, SystemClock>();
 builder.Services.AddSingleton<Random>();
 builder.Services.AddSingleton<IBotStrategy, DefaultBotStrategy>();
@@ -16,6 +17,8 @@ var app = builder.Build();
 app.MapHealthChecks("/livez");
 app.MapHealthChecks("/readyz");
 app.MapHub<GameHub>("/hubs/game");
+app.UseStaticFiles();
+app.MapFallbackToFile("index.html");
 app.MapGet("/metrics", () => Results.Json(new
 {
     rooms = RoomManager.CountRooms,
