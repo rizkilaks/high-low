@@ -485,3 +485,7 @@ $RECYCLE.BIN/
 node_modules/
 wwwroot/js/
 wwwroot/vendor/
+
+# frontend build output
+src/HighLow/wwwroot/js/
+src/HighLow/wwwroot/lib/
