@@ -5,16 +5,15 @@ namespace HighLow.Tests;
 
 public class GameScoresTests
 {
-    private static readonly (int Seat, int Score, int TieAbs, int TieMax) S =
-        (Seat: 0, Score: 0, TieAbs: 0, TieMax: 0);
+    private static readonly PlayerStanding S = new(0, 0, 0, 0);
 
     [Fact]
     public void ApplyPrize_updates_score_and_tie_accumulators()
     {
-        var (_, score, tieAbs, tieMax) = GameScores.ApplyPrize(S with { Seat = 2 }, -3);
-        Assert.Equal(-3, score);
-        Assert.Equal(3, tieAbs);
-        Assert.Equal(3, tieMax);
+        var updated = new PlayerStanding(2, 0, 0, 0).ApplyPrize(-3);
+        Assert.Equal(-3, updated.Score);
+        Assert.Equal(3, updated.TieAbs);
+        Assert.Equal(3, updated.TieMax);
     }
 
     [Fact]

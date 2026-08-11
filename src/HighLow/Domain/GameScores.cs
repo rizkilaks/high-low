@@ -1,13 +1,19 @@
 namespace HighLow.Domain;
 
+public sealed record PlayerStanding(int Seat, int Score, int TieAbs, int TieMax)
+{
+    public PlayerStanding ApplyPrize(int point) =>
+        this with
+        {
+            Score = Score + point,
+            TieAbs = TieAbs + Math.Abs(point),
+            TieMax = Math.Max(TieMax, Math.Abs(point))
+        };
+}
+
 public static class GameScores
 {
-    public static (int Seat, int Score, int TieAbs, int TieMax) ApplyPrize(
-        (int Seat, int Score, int TieAbs, int TieMax) standing, int point)
-        => (standing.Seat, standing.Score + point, standing.TieAbs + Math.Abs(point), Math.Max(standing.TieMax, Math.Abs(point)));
-
-    public static IReadOnlyList<int> RankWinners(
-        IEnumerable<(int Seat, int Score, int TieAbs, int TieMax)> standings, int topN)
+    public static IReadOnlyList<int> RankWinners(IEnumerable<PlayerStanding> standings, int topN)
         => standings
             .OrderByDescending(s => s.Score)
             .ThenByDescending(s => s.TieAbs)
