@@ -32,8 +32,10 @@ public sealed class RoomManager
         try
         {
             if (CountRoomsForIp(ip) >= MaxRoomsPerIp) return JoinResult.Fail("too many rooms from this address");
+
             var code = requestedCode?.ToUpperInvariant() ?? NewCodeLocked();
             if (_rooms.ContainsKey(code)) return JoinResult.Fail("code already taken");
+
             return await CreateAndJoinLockedAsync(code, name, ip, isPublic, now);
         }
         finally { _gate.Release(); }
@@ -45,8 +47,11 @@ public sealed class RoomManager
         try
         {
             if (CountRoomsForIp(ip) >= MaxRoomsPerIp) return JoinResult.Fail("too many rooms from this address");
+
             if (!_rooms.TryGetValue(code.ToUpperInvariant(), out var room)) return JoinResult.Fail("room not found");
+
             if (room.Phase != RoomPhase.Lobby || room.Seats.Count >= 4) return JoinResult.Fail("room full or already started");
+
             return await AddHumanLockedAsync(room, name, ip, now);
         }
         finally { _gate.Release(); }
@@ -58,8 +63,10 @@ public sealed class RoomManager
         try
         {
             if (CountRoomsForIp(ip) >= MaxRoomsPerIp) return JoinResult.Fail("too many rooms from this address");
+
             var room = _rooms.Values.FirstOrDefault(r => r.IsPublic && r.Phase == RoomPhase.Lobby && r.Seats.Count < 4);
             if (room is not null) return await AddHumanLockedAsync(room, name, ip, now);
+
             var code = NewCodeLocked();
             return await CreateAndJoinLockedAsync(code, name, ip, isPublic: true, now);
         }

@@ -94,6 +94,7 @@ public sealed class Room
     private async Task<(bool Ok, string? Error, IReadOnlyList<object> Events)> StartLockedAsync(DateTimeOffset now)
     {
         if (Phase != RoomPhase.Lobby) return (false, "already started", DrainOutbox());
+
         if (_seats.Count == 0) return (false, "no players", DrainOutbox());
 
         while (_seats.Count < 4)
@@ -110,11 +111,16 @@ public sealed class Room
         try
         {
             if (Phase != RoomPhase.Submitting) return (false, "not in submit phase", DrainOutbox());
+
             var s = _seats[seat];
             if (s.IsBot || s.BotControlled) return (false, "bot seat", DrainOutbox());
+
             if (s.HasSubmitted) return (false, "already submitted", DrainOutbox());
+
             if (!s.Hand.Contains(card)) return (false, "card not in hand", DrainOutbox());
+
             if (special == Special.Reverse && s.ReverseLeft <= 0) return (false, "no reverse left", DrainOutbox());
+
             if (pass && _forcedReveal.Contains(seat)) return (false, "forced to reveal", DrainOutbox());
 
             s.Hand.Remove(card);
@@ -138,9 +144,13 @@ public sealed class Room
         try
         {
             if (Phase != RoomPhase.GiftDecision) return (false, "no gift decision pending", DrainOutbox());
+
             if (_seats[seat].IsBot || _seats[seat].BotControlled) return (false, "bot seat", DrainOutbox());
+
             if (seat != _winnerSeat) return (false, "not the winner", DrainOutbox());
+
             if (target is int t && !_voidedThisRound.Contains(t)) return (false, "target not overlapped", DrainOutbox());
+
             return (true, null, ApplyResolutionLocked(target, now));
         }
         finally { _gate.Release(); }
@@ -153,7 +163,9 @@ public sealed class Room
         {
             var seat = _seats.FindIndex(s => s.Token == token);
             if (seat < 0) return (false, "unknown token", null, DrainOutbox());
+
             if (Phase == RoomPhase.Finished) return (false, "game over", null, DrainOutbox());
+
             var s = _seats[seat];
             s.Connected = true;
             s.BotControlled = false;
@@ -172,6 +184,7 @@ public sealed class Room
         {
             var s = _seats[seat];
             if (!s.Connected && !s.IsBot) return DrainOutbox();
+
             s.Connected = false;
             s.DisconnectedAtUtc = now;
             if (!s.IsBot) Push(new PlayerStatusEvent(seat, "disconnected"));

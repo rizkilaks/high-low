@@ -47,8 +47,10 @@ public sealed class GameHub : Hub
     {
         var room = await _rooms.FindRoomAsync(roomCode);
         if (room is null || room.HostToken != token) return await RejectAsync("not the host");
+
         var (ok, error, events) = await room.StartAsync(_clock.UtcNow);
         if (!ok) return await RejectAsync(error!);
+
         await PushToRoomAsync(roomCode, events);
         return true;
     }
@@ -57,10 +59,13 @@ public sealed class GameHub : Hub
     {
         var room = await _rooms.FindRoomAsync(roomCode);
         if (room is null) return await RejectAsync("room not found");
+
         var seat = room.Seats.ToList().FindIndex(s => s.Token == token);
         if (seat < 0) return await RejectAsync("unknown token");
+
         var (ok, error, events) = await room.SubmitAsync(seat, card, special, pass, _clock.UtcNow);
         if (!ok) return await RejectAsync(error!);
+
         Metrics.Submissions++;
         await PushToRoomAsync(roomCode, events);
         return true;
@@ -70,10 +75,13 @@ public sealed class GameHub : Hub
     {
         var room = await _rooms.FindRoomAsync(roomCode);
         if (room is null) return await RejectAsync("room not found");
+
         var seat = room.Seats.ToList().FindIndex(s => s.Token == token);
         if (seat < 0) return await RejectAsync("unknown token");
+
         var (ok, error, events) = await room.ChooseGiftAsync(seat, target, _clock.UtcNow);
         if (!ok) return await RejectAsync(error!);
+
         Metrics.GiftsChosen++;
         await PushToRoomAsync(roomCode, events);
         return true;
@@ -83,10 +91,13 @@ public sealed class GameHub : Hub
     {
         var room = await _rooms.FindRoomAsync(roomCode);
         if (room is null) { await SendRejectedAsync("room not found"); return null; }
+
         var seat = room.Seats.ToList().FindIndex(s => s.Token == token);
         if (seat < 0) { await SendRejectedAsync("unknown token"); return null; }
+
         var (ok, error, view, events) = await room.ReconnectAsync(token, _clock.UtcNow);
         if (!ok) { await SendRejectedAsync(error!); return null; }
+
         Metrics.Reconnects++;
         await PushToRoomAsync(roomCode, events);
         return view;
@@ -109,6 +120,7 @@ public sealed class GameHub : Hub
     private async Task<JoinedRoom?> CompleteJoinAsync(JoinResult r)
     {
         if (!r.Ok) { await SendRejectedAsync(r.Error!); return null; }
+
         await Groups.AddToGroupAsync(Context.ConnectionId, RoomGroup(r.Room!.Code));
         Connections[Context.ConnectionId] = (r.Room.Code, r.Seat);
         await PushToRoomAsync(r.Room.Code, r.Events);
