@@ -1,5 +1,56 @@
 <!DOCTYPE html>
-<html lang="en">
-<head><meta charset="utf-8"><title>HighLow</title></head>
-<body><main id="app">highlow</main></body>
+<html lang="en" data-game="highlow">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>High and Low</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div id="conn-banner" class="hidden"></div>
+  <div id="toast" class="hidden"></div>
+
+  <section id="screen-lobby">
+    <h1>HIGH AND LOW</h1>
+    <input id="name-input" placeholder="your name">
+    <div class="row">
+      <input id="room-code-input" placeholder="room code">
+      <button id="btn-join">Join</button>
+      <button id="btn-create">Create room</button>
+      <button id="btn-quick">Quick match</button>
+      <label><input type="checkbox" id="public-check"> public</label>
+    </div>
+    <div id="lobby-code" class="hidden">Room code: <strong></strong></div>
+    <div id="lobby-seats"></div>
+  </section>
+
+  <section id="screen-table" class="hidden">
+    <div id="seat-0" class="seat top"></div>
+    <div id="seat-1" class="seat right"></div>
+    <div id="seat-2" class="seat bottom"></div>
+    <div id="seat-3" class="seat left"></div>
+    <div id="center">
+      <div id="round-label"></div>
+      <div id="prize"></div>
+      <div id="direction"></div>
+      <div id="winner-line"></div>
+      <div id="countdown"></div>
+      <div id="event-log"></div>
+      <button id="btn-start" class="hidden">Start with bots</button>
+      <button id="btn-leave" class="hidden">Leave</button>
+    </div>
+    <div id="hand"></div>
+    <div id="controls">
+      <button id="btn-pass">Pass</button>
+      <button id="btn-reverse">Reverse</button>
+      <button id="btn-submit" disabled>Submit</button>
+    </div>
+  </section>
+
+  <div id="overlay-gift" class="overlay hidden"><h2>Gift the negative</h2><div id="gift-targets"></div></div>
+  <div id="overlay-finished" class="overlay hidden"><h2>Game over</h2><div id="finished-winners"></div><table id="finished-scores"></table></div>
+
+  <script src="/lib/signalr/signalr.js"></script>
+  <script type="module" src="/js/app.js"></script>
+</body>
 </html>
