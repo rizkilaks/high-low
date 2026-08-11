@@ -167,6 +167,16 @@ public class GameHubTests
     }
 
     [Fact]
+    public async Task Frontend_build_assets_are_served()
+    {
+        await using var ctx = new HubTestContext();
+        var app = await ctx.Http.GetAsync("/js/app.js");
+        Assert.Equal(System.Net.HttpStatusCode.OK, app.StatusCode);
+        var lib = await ctx.Http.GetAsync("/lib/signalr/signalr.js");
+        Assert.Equal(System.Net.HttpStatusCode.OK, lib.StatusCode);
+    }
+
+    [Fact]
     public async Task Metrics_endpoint_reports_live_counters()
     {
         await using var ctx = new HubTestContext();
