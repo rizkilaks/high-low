@@ -22,6 +22,15 @@ public sealed class FixedBotStrategy : IBotStrategy
     }
 }
 
+public sealed class ScriptedRandom : Random
+{
+    private readonly Queue<(double? Double, int? Int)> _values = new();
+    public void Script(double d) => _values.Enqueue((d, null));
+    public void Script(int i) => _values.Enqueue((null, i));
+    public override double NextDouble() => _values.Dequeue().Double!.Value;
+    public override int Next(int maxValue) => _values.Dequeue().Int!.Value;
+}
+
 public static class TestRoomFactory
 {
     public static Room CreateRoom(IBotStrategy? bots = null, IReadOnlyList<int>? deck = null)
