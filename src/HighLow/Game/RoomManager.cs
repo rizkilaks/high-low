@@ -30,7 +30,7 @@ public sealed class RoomManager
         try
         {
             if (CountRoomsForIp(ip) >= MaxRoomsPerIp) return JoinResult.Fail("too many rooms from this address");
-            var code = requestedCode is { } rc ? rc.ToUpperInvariant() : NewCodeLocked();
+            var code = requestedCode?.ToUpperInvariant() ?? NewCodeLocked();
             if (_rooms.ContainsKey(code)) return JoinResult.Fail("code already taken");
             return await CreateAndJoinLockedAsync(code, name, ip, isPublic, now);
         }
