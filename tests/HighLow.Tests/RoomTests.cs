@@ -46,6 +46,7 @@ public class RoomTests
         Assert.True(events.OfType<CardsRevealedEvent>().Any());
         Assert.True(events.OfType<RoundResolvedEvent>().Any());
         var next = events.OfType<RoundStartedEvent>().Last();
+        Assert.Equal(clock.UtcNow.ToUnixTimeMilliseconds() + Room.SubmitPhaseMs, next.PhaseDeadlineUtcMs);
         Assert.Equal(2, next.Round);
         Assert.Equal(2, room.Round);
         Assert.Equal(1, room.StartSeat);

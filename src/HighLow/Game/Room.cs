@@ -270,7 +270,7 @@ public sealed class Room
         _deadlineUtcMs = NowMs(now) + SubmitPhaseMs;
         Touch(now);
         Push(new RoundStartedEvent(Round, TotalRounds, _prize.Value, StartSeat,
-            _forcedReveal.ToArray(), _hiddenWinnerCard));
+            _forcedReveal.ToArray(), _hiddenWinnerCard, _deadlineUtcMs));
         _hiddenWinnerCard = null;
 
         BotSubmitsLocked();

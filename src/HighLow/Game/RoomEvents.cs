@@ -8,7 +8,7 @@ public sealed record SeatInfo(string Name, bool IsBot, bool BotControlled, bool 
 public sealed record LobbyStateEvent(string RoomCode, IReadOnlyList<SeatInfo> Seats, bool CanStart);
 public sealed record GameStartedEvent(IReadOnlyList<SeatInfo> Seats, int StartSeat);
 public sealed record RoundStartedEvent(int Round, int TotalRounds, int Prize, int StartSeat,
-    IReadOnlyList<int> ForcedRevealSeats, int? HiddenWinnerCardValue);
+    IReadOnlyList<int> ForcedRevealSeats, int? HiddenWinnerCardValue, long PhaseDeadlineUtcMs);
 public sealed record SpecialsRevealedEvent(int Reverses, SpecialDirection Direction, IReadOnlyList<int> ReverseSeats);
 public sealed record PublicCard(int Seat, int? Card, bool Hidden);
 public sealed record CardsRevealedEvent(IReadOnlyList<PublicCard> Cards, IReadOnlyList<int> VoidedSeats);
