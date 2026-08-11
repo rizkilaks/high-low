@@ -36,14 +36,13 @@ public class RandomizedInvariantTests
                 {
                     Assert.Equal(expected, r.WinnerCardValue);
                 }
-                Assert.Null(r.BurnedPrize);
+                Assert.False(r.PointBurned);
             }
             else
             {
-                Assert.Equal(prize, r.BurnedPrize);
+                Assert.True(r.PointBurned);
                 Assert.Null(r.WinnerCardValue);
             }
-
             var voidGroups = subs.GroupBy(kv => kv.Value.CardValue).Where(g => g.Count() > 1);
             Assert.Equal(voidGroups.SelectMany(g => g.Select(kv => kv.Key)).OrderBy(x => x), r.VoidedSeats.OrderBy(x => x));
         }

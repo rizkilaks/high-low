@@ -64,7 +64,7 @@ public class RoundResolverTests
             [3] = new(8, Special.Normal, false),
         });
         Assert.Null(r.WinnerSeat);
-        Assert.Equal(-3, r.BurnedPrize);
+        Assert.True(r.PointBurned);
         Assert.False(r.GiftEligible);
     }
 

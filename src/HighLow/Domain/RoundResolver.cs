@@ -2,7 +2,7 @@ namespace HighLow.Domain;
 
 public static class RoundResolver
 {
-    public static RoundResolution Resolve(int roundNumber, int prize, IReadOnlyDictionary<int, Submission> submissions)
+    public static RoundResolution Resolve(int roundNumber, int point, IReadOnlyDictionary<int, Submission> submissions)
     {
         var reverses = submissions.Values.Count(s => s.Special == Special.Reverse);
         var direction = reverses % 2 == 1 ? SpecialDirection.Lowest : SpecialDirection.Highest;
@@ -27,14 +27,14 @@ public static class RoundResolver
 
         return new RoundResolution(
             roundNumber,
-            prize,
+            point,
             direction,
             submissions.OrderBy(kv => kv.Key).Select(kv => new RevealedCard(kv.Key, kv.Value.CardValue, kv.Value.Pass)).ToArray(),
             voided,
             winnerSeat,
             visible,
             hidden,
-            winnerSeat.HasValue ? null : prize,
-            prize < 0 && voided.Length > 0 && winnerSeat.HasValue);
+            winnerSeat is null,
+            point < 0 && voided.Length > 0 && winnerSeat.HasValue);
     }
 }
