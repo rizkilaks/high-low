@@ -67,8 +67,6 @@ public sealed class Room
     private long NowMs(DateTimeOffset now) => now.ToUnixTimeMilliseconds();
     private void Touch(DateTimeOffset now) => LastActivityUtc = now;
 
-    // ---------- public API (all acquire _gate) ----------
-
     public async Task<(int Seat, IReadOnlyList<object> Events)> AddHumanAsync(string name, string token, DateTimeOffset now)
     {
         await _gate.WaitAsync();
@@ -106,8 +104,7 @@ public sealed class Room
         return (true, null, DrainOutbox());
     }
 
-    public async Task<(bool Ok, string? Error, IReadOnlyList<object> Events)> SubmitAsync(
-        int seat, int card, Special special, bool pass, DateTimeOffset now)
+    public async Task<(bool Ok, string? Error, IReadOnlyList<object> Events)> SubmitAsync(int seat, int card, Special special, bool pass, DateTimeOffset now)
     {
         await _gate.WaitAsync();
         try
@@ -135,8 +132,7 @@ public sealed class Room
         finally { _gate.Release(); }
     }
 
-    public async Task<(bool Ok, string? Error, IReadOnlyList<object> Events)> ChooseGiftAsync(
-        int seat, int? target, DateTimeOffset now)
+    public async Task<(bool Ok, string? Error, IReadOnlyList<object> Events)> ChooseGiftAsync(int seat, int? target, DateTimeOffset now)
     {
         await _gate.WaitAsync();
         try
@@ -150,8 +146,7 @@ public sealed class Room
         finally { _gate.Release(); }
     }
 
-    public async Task<(bool Ok, string? Error, RoomView? View, IReadOnlyList<object> Events)> ReconnectAsync(
-        string token, DateTimeOffset now)
+    public async Task<(bool Ok, string? Error, RoomView? View, IReadOnlyList<object> Events)> ReconnectAsync(string token, DateTimeOffset now)
     {
         await _gate.WaitAsync();
         try
@@ -243,8 +238,6 @@ public sealed class Room
             _prize, _direction, _winnerSeat, _winnerCardVisible, _giftTargetSeat, _burnedPrize,
             StartSeat, _forcedReveal.ToArray(), _hiddenWinnerCard, _deadlineUtcMs, SeatsInfo(), mine);
     }
-
-    // ---------- state machine internals ----------
 
     private void BeginRoundLocked(DateTimeOffset now)
     {

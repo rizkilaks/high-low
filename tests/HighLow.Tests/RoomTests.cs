@@ -11,7 +11,7 @@ public class RoomTests
 
     private static async Task<Room> HumanRoom(FakeClock clock, IReadOnlyList<int>? deck = null)
     {
-        var room = TestRoomFactory.CreateRoom(clock, deck: deck);
+        var room = TestRoomFactory.CreateRoom(deck: deck);
         await room.AddHumanAsync("a", "ta", clock.UtcNow);
         await room.AddHumanAsync("b", "tb", clock.UtcNow);
         await room.AddHumanAsync("c", "tc", clock.UtcNow);
@@ -205,7 +205,7 @@ public class RoomTests
         var clock = new FakeClock();
         var bots = new FixedBotStrategy();
         bots.Enqueue(1, 2, 9);
-        var room = TestRoomFactory.CreateRoom(clock, bots, NegativeFirstDeck);
+        var room = TestRoomFactory.CreateRoom(bots, NegativeFirstDeck);
         await room.AddHumanAsync("host", "th", clock.UtcNow);
         var start = await room.StartAsync(clock.UtcNow);
         Assert.True(start.Ok);
