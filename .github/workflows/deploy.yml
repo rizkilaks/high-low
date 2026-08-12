@@ -28,4 +28,4 @@ jobs:
           ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
             -o LogLevel=ERROR ubuntu@43.134.104.216 false
       - name: Smoke check
-        run: curl -sf --retry 10 --retry-connrefused --retry-delay 2 https://highlow.duckdns.org:8443/readyz
+        run: curl -sf --retry 10 --retry-connrefused --retry-delay 2 https://rlhighlow.duckdns.org:8443/readyz

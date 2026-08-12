@@ -1,4 +1,4 @@
-highlow.duckdns.org {
+rlhighlow.duckdns.org {
 	tls {
 		dns duckdns {$DUCK_TOKEN}
 	}
