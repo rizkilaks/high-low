@@ -125,6 +125,7 @@ export function applyEvent(state: GameState, evt: { name: string; payload: unkno
             state.seats = p.seats.map(toSeatState);
             state.revealed = [];
             state.voidedSeats = [];
+            state.reverseSeats = [];
             state.mySubmitted = false;
             state.phase = "Submitting";
             state.direction = null;
@@ -177,6 +178,7 @@ export function applyEvent(state: GameState, evt: { name: string; payload: unkno
         case "gameFinished": {
             const p = evt.payload as GameFinishedEvent;
             state.winnerSeats = p.winnerSeats;
+            state.reverseSeats = [];
             state.phase = "Finished";
             state.deadlineMs = null;
             applyScores(state, p.scores);
@@ -223,6 +225,7 @@ export function applyView(state: GameState, view: RoomView): Reaction {
     state.mySubmitted = view.seats[state.mySeat]?.hasSubmitted ?? false;
     state.revealed = [];
     state.voidedSeats = [];
+    state.reverseSeats = [];
     state.log.push("reconnected");
     return view.phase === "Finished" ? { overlay: "finished" } : {};
 }
