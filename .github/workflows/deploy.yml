@@ -24,7 +24,7 @@ jobs:
           set -e
           umask 077
           trap 'rm -f ~/.ssh/deploy_key' EXIT
-          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/deploy_key
+          printf '%s' "$VPS_SSH_KEY" | base64 -d > ~/.ssh/deploy_key
           ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
             -o LogLevel=ERROR ubuntu@43.134.104.216 false
       - name: Smoke check
