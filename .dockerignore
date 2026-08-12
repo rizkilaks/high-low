@@ -1,0 +1,9 @@
+**/bin
+**/obj
+tests/
+.git
+.superpowers/
+node_modules/
+src/HighLow/wwwroot/js/
+src/HighLow/wwwroot/lib/
+.env
