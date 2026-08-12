@@ -38,6 +38,7 @@ public class RoomTests
         var room = await HumanRoom(clock);
         var events = new List<object>();
         events.AddRange((await room.SubmitAsync(0, 1, Special.Normal, false, clock.UtcNow)).Events);
+        Assert.True((await room.ViewAsync(1)).Seats[0].HasSubmitted);
         events.AddRange((await room.SubmitAsync(1, 2, Special.Normal, false, clock.UtcNow)).Events);
         events.AddRange((await room.SubmitAsync(2, 3, Special.Normal, false, clock.UtcNow)).Events);
         events.AddRange((await room.SubmitAsync(3, 4, Special.Normal, false, clock.UtcNow)).Events);
@@ -46,6 +47,11 @@ public class RoomTests
         Assert.True(events.OfType<CardsRevealedEvent>().Any());
         Assert.True(events.OfType<RoundResolvedEvent>().Any());
         var next = events.OfType<RoundStartedEvent>().Last();
+        Assert.Equal(clock.UtcNow.ToUnixTimeMilliseconds() + Room.SubmitPhaseMs, next.PhaseDeadlineUtcMs);
+        Assert.Equal(4, next.Seats.Count);
+        Assert.Equal(9, next.Seats[0].HandCount);
+        Assert.Null((await room.ViewAsync(0)).WinnerSeats);
+        Assert.False((await room.ViewAsync(0)).Seats[0].HasSubmitted);
         Assert.Equal(2, next.Round);
         Assert.Equal(2, room.Round);
         Assert.Equal(1, room.StartSeat);
@@ -161,6 +167,9 @@ public class RoomTests
 
         Assert.Equal(RoomPhase.GiftDecision, room.Phase);
         Assert.Equal(new[] { 0, 1 }, events.OfType<GiftPromptEvent>().Single().TargetSeats);
+        Assert.Equal(clock.UtcNow.ToUnixTimeMilliseconds() + Room.GiftPhaseMs,
+            events.OfType<GiftPromptEvent>().Single().PhaseDeadlineUtcMs);
+        Assert.Equal(new[] { 0, 1 }, (await room.ViewAsync(3)).GiftTargets);
 
         var notWinner = await room.ChooseGiftAsync(0, 1, clock.UtcNow);
         Assert.False(notWinner.Ok);
@@ -307,5 +316,11 @@ public class RoomTests
         Assert.Equal(RoomPhase.Finished, room.Phase);
         var finished = events.OfType<GameFinishedEvent>().Single();
         Assert.Equal(2, finished.WinnerSeats.Count);
+        var view = await room.ViewAsync(0);
+        Assert.Equal(2, view.WinnerSeats!.Count);
+
+        var reconnect = await room.ReconnectAsync("ta", clock.UtcNow);
+        Assert.True(reconnect.Ok);
+        Assert.Equal(2, reconnect.View!.WinnerSeats!.Count);
     }
 }

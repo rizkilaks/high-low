@@ -46,6 +46,8 @@ public sealed class HubTestContext : IAsyncDisposable
         var conn = new HubConnectionBuilder()
             .WithUrl(new Uri("http://localhost/hubs/game"), o =>
                 o.HttpMessageHandlerFactory = _ => Server.CreateHandler())
+            .AddJsonProtocol(o =>
+                o.PayloadSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()))
             .Build();
         await conn.StartAsync();
         return conn;

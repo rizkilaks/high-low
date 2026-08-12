@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "target": "es2020",
+    "module": "es2020",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "rootDir": "src/HighLow/wwwroot/ts",
+    "outDir": "src/HighLow/wwwroot/js",
+    "noEmitOnError": true
+  },
+  "include": ["src/HighLow/wwwroot/ts"]
+}
