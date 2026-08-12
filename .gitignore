@@ -489,3 +489,6 @@ wwwroot/vendor/
 # frontend build output
 src/HighLow/wwwroot/js/
 src/HighLow/wwwroot/lib/
+
+# brainstorm session artifacts
+.superpowers/
