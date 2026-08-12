@@ -1,0 +1,26 @@
+# Production override: docker compose -f compose.yaml -f compose.prod.yaml up -d --build
+# Requires .env with DUCK_TOKEN=<token from duckdns.org page>
+services:
+  highlow:
+    ports: !reset []
+    restart: unless-stopped
+
+  caddy:
+    build:
+      context: .
+      dockerfile: Dockerfile.caddy
+    restart: unless-stopped
+    depends_on:
+      - highlow
+    ports:
+      - "8443:443"
+    environment:
+      DUCK_TOKEN: ${DUCK_TOKEN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:

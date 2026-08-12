@@ -1,0 +1,6 @@
+highlow.duckdns.org {
+	tls {
+		dns duckdns {$DUCK_TOKEN}
+	}
+	reverse_proxy highlow:8080
+}
