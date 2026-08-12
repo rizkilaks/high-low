@@ -44,6 +44,7 @@ export interface GameState {
     myHand: number[];
     revealed: PublicCard[];
     voidedSeats: number[];
+    reverseSeats: number[];
     mySubmitted: boolean;
     log: string[];
     giftTargets: number[];
@@ -68,7 +69,7 @@ export function initialState(roomCode: string, mySeat: number, myToken: string):
         deadlineMs: null,
         seats: Array.from({ length: 4 }, () => ({ ...EMPTY_SEAT })),
         myHand: [],
-        revealed: [], voidedSeats: [],
+        revealed: [], voidedSeats: [], reverseSeats: [],
         mySubmitted: false,
         log: [],
         giftTargets: [], winnerSeats: [],
@@ -137,6 +138,7 @@ export function applyEvent(state: GameState, evt: { name: string; payload: unkno
         case "specialsRevealed": {
             const p = evt.payload as SpecialsRevealedEvent;
             state.direction = p.direction;
+            state.reverseSeats = p.reverseSeats;
             log(`specials: ${p.reverses} reverse${p.reverses === 1 ? "" : "s"} · ${p.direction}`);
             break;
         }
