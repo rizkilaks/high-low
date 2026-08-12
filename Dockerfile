@@ -9,10 +9,13 @@ RUN npm ci && npm run build
 # Stage 2: publish
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
+COPY src/HighLow/HighLow.csproj src/HighLow/
+RUN dotnet restore src/HighLow/HighLow.csproj
 COPY src/HighLow/ src/HighLow/
 COPY --from=frontend /build/src/HighLow/wwwroot/js src/HighLow/wwwroot/js
 COPY --from=frontend /build/src/HighLow/wwwroot/lib src/HighLow/wwwroot/lib
-RUN dotnet publish src/HighLow/HighLow.csproj -c Release -o /out
+RUN rm -rf src/HighLow/wwwroot/ts
+RUN dotnet publish src/HighLow/HighLow.csproj -c Release --no-restore -o /out
 
 # Stage 3: runtime
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
