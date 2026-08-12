@@ -235,9 +235,11 @@ async function boot(): Promise<void> {
         const cd = el("countdown");
         if (state.deadlineMs == null) {
             cd.textContent = "";
+            cd.classList.remove("urgent");
             return;
         }
         const secs = Math.max(0, Math.ceil((state.deadlineMs - Date.now()) / 1000));
+        cd.classList.toggle("urgent", secs <= 10 && secs > 0);
         cd.textContent = secs > 0 ? `${secs}s left` : "…";
     }, 500);
 }

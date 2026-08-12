@@ -111,6 +111,13 @@ function renderSeatPanel(state: GameState, i: number, mySeat: number, myName: st
     meta.textContent = `✕ ${s.handCount} cards · ${s.score} pts · ${s.reverseLeft} rev`;
     panel.appendChild(meta);
 
+    if (state.reverseSeats.includes(i)) {
+        const rev = document.createElement("span");
+        rev.className = "card-face special";
+        rev.textContent = "⟳ REVERSE";
+        panel.appendChild(rev);
+    }
+
     const dot = document.createElement("span");
     dot.className = "dot";
     dot.classList.toggle("offline", !s.connected);
@@ -128,6 +135,7 @@ function renderHand(state: GameState): void {
     for (const card of state.myHand) {
         const b = document.createElement("button");
         b.className = "card" + (card === selectedCard ? " selected" : "");
+        b.classList.add(card <= 5 ? "blue" : "gold");
         b.textContent = String(card);
         b.disabled = !canPick;
         b.addEventListener("click", () => {
@@ -176,6 +184,7 @@ export function renderReveal(state: GameState): void {
         if (!card) continue;
         const face = document.createElement("span");
         face.className = "card-face" + (card.hidden ? " hidden" : "");
+        face.classList.add(card.card != null ? (card.card <= 5 ? "blue" : "gold") : "special");
         face.textContent = card.hidden ? "?" : card.card != null ? String(card.card) : "—";
         reveal.appendChild(face);
     }
@@ -211,6 +220,7 @@ export function showFinished(state: GameState): void {
     const winners = el("finished-winners");
     winners.replaceChildren();
     const w = document.createElement("div");
+    w.className = "winner-name";
     w.textContent = state.winnerSeats.map(s => state.seats[s]?.name ?? `seat ${s}`).join(", ");
     winners.appendChild(w);
     const table = el("finished-scores");
