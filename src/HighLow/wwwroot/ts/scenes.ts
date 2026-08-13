@@ -57,7 +57,7 @@ function playerStack(n: number, num: string, tier: "blue" | "gold", spec: "Norma
     const special = card("?", "card-face hidden");
     const number = tierCard(num, tier, anim);
     const stack = el("div", "scene-stack");
-    stack.append(special, number);
+    stack.append(number, special);
     return { wrap: playerSlot(n, stack, "anim-fade", chipCls), special, number, specFor: spec };
 }
 
@@ -111,7 +111,7 @@ function cardRow(anim = "anim-deal", gap = 6): HTMLElement {
     return row;
 }
 
-const POINT_VALUES = ["-1", "2", "-3", "4", "-5", "6", "-7", "8", "-9", "+10"];
+const POINT_VALUES = ["-1", "2", "-3", "4", "-5", "6", "-7", "8", "-9", "10"];
 
 // 1 — title
 function sceneTitle(root: HTMLElement): void {
@@ -130,28 +130,49 @@ function sceneTitle(root: HTMLElement): void {
     s.append(t, row);
 }
 
-// 2 — point deck, 9 of 10, one removed
+// 2 — point deck, 9 of 10, one removed from the stack
 function sceneDeck(root: HTMLElement): void {
     const s = stage(root);
     s.style.flexDirection = "column";
     s.style.gap = "16px";
     const row = cardRow();
+    const cards: HTMLElement[] = [];
     POINT_VALUES.forEach((v, i) => {
         const c = pointCard(v, "anim-deal");
         delay(c, i * 60);
         row.appendChild(c);
+        cards.push(c);
     });
     s.appendChild(row);
-    // one card slides away (removed)
+    // flip every card to its back
+    cards.forEach((c, i) => schedule(() => {
+        c.textContent = "?";
+        c.className = "card-face hidden anim-flip";
+    }, 1000 + i * 60));
+    // converge into a single stack (rows shrink into a pile)
     schedule(() => {
-        const last = row.children[row.children.length - 1] as HTMLElement;
-        last.classList.add("anim-slide-away");
-    }, 1000);
-    // deck pile: single card back with a "Deck" label above
+        row.classList.add("anim-fade-out");
+    }, 1800);
+    // stack pile: a few overlapping backs, labeled Deck
     schedule(() => {
-        const deck = labeled("Deck", card("?", "card-face hidden"), "anim-pop");
+        const pile = el("div", "scene-stack");
+        pile.style.flexDirection = "row";
+        pile.style.gap = "-8px";
+        const back1 = card("?", "card-face hidden");
+        const back2 = card("?", "card-face hidden");
+        const back3 = card("?", "card-face hidden");
+        back2.style.marginLeft = "-30px";
+        back3.style.marginLeft = "-30px";
+        pile.append(back1, back2, back3);
+        const deck = labeled("Deck", pile, "anim-pop");
         s.appendChild(deck);
-    }, 1600);
+        // one card is removed from the stack
+        const removed = card("?", "card-face hidden anim-slide-away");
+        removed.style.position = "absolute";
+        removed.style.marginTop = "-10px";
+        removed.style.marginLeft = "60px";
+        s.appendChild(removed);
+    }, 2100);
     push(root, "There will be nine rounds. Of the 10 point cards, 9 cards will be shown each round. One card is removed.");
 }
 
@@ -260,7 +281,7 @@ function sceneReverseOnce(root: HTMLElement): void {
 function sceneReveal(root: HTMLElement): void {
     const s = stage(root);
     const row = cardRow(undefined, 14);
-    const start = playerStack(1, "5", "blue", "Normal", "anim-flip", "start");
+    const start = playerStack(1, "5", "blue", "Normal", "anim-flip");
     const c1 = playerStack(2, "2", "blue", "Normal", "anim-flip");
     const c2 = playerStack(3, "4", "blue", "Normal", "anim-flip");
     const winner = playerStack(4, "10", "gold", "Normal", "anim-flip");
@@ -281,9 +302,8 @@ function scenePass(root: HTMLElement): void {
     const p1 = playerStack(1, "6", "gold", "Normal", "anim-deal");
     const p2 = playerStack(2, "3", "blue", "Normal", "anim-deal");
     const p3 = playerStack(3, "8", "gold", "Normal", "anim-deal");
-    const p4 = playerSlot(4, card("?", "card-face hidden anim-pop"), "anim-fade", "pass");
+    const p4 = playerSlot(4, card("?", "card-face hidden anim-pop"), "anim-fade");
     delay(p4, 500);
-    p4.querySelector(".card-face")?.classList.add("anim-shake");
     row.append(p1.wrap, p2.wrap, p3.wrap, p4);
     s.appendChild(row);
     push(root, "You can Pass to hide your card. But the starting player and previous passers must reveal.");
@@ -309,10 +329,8 @@ function sceneVoid(root: HTMLElement): void {
 // 10 — negative point, gift to an overlapped player
 function sceneGift(root: HTMLElement): void {
     const s = stage(root);
-    const p = pointCard("-3", "anim-deal");
-    s.appendChild(p);
+    s.style.flexDirection = "column";
     const row = cardRow(undefined, 14);
-    row.style.marginTop = "14px";
     const g = playerStack(1, "4", "blue", "Normal", "anim-pop");
     const target = playerStack(2, "4", "blue", "Normal", "anim-pop");
     delay(g.wrap, 600);
@@ -321,6 +339,16 @@ function sceneGift(root: HTMLElement): void {
     target.number.classList.add("scene-void");
     row.append(g.wrap, target.wrap);
     s.appendChild(row);
+    // the negative point card is handed from the winner to the overlapped target
+    const p = pointCard("-3", "anim-deal");
+    delay(p, 1400);
+    s.appendChild(p);
+    schedule(() => {
+        p.classList.remove("anim-deal");
+        p.classList.add("anim-gift-to-target");
+        target.wrap.querySelector(".card-face")?.classList.add("scene-rev");
+        p.textContent = "-3";
+    }, 2200);
     push(root, "Negative point, overlapped players. The winner hands the negative to one of them.");
 }
 
@@ -328,22 +356,56 @@ function sceneGift(root: HTMLElement): void {
 function sceneScores(root: HTMLElement): void {
     const s = stage(root);
     s.style.flexDirection = "column";
-    const row = el("div", "scene-row");
-    row.style.gap = "24px";
-    const a = el("div");
-    a.textContent = "A: 5";
-    a.style.color = "var(--silver)";
-    a.style.fontSize = "1.4em";
-    const b = el("div");
-    b.textContent = "B: 5";
-    b.style.color = "var(--gold)";
-    b.style.fontSize = "1.4em";
-    row.append(a, b);
+    s.style.gap = "16px";
+    const row = cardRow(undefined, 24);
+
+    const aCol = el("div", "scene-labeled");
+    const aChip = el("span", "player-chip");
+    aChip.textContent = "A";
+    const aCards = el("div", "scene-row");
+    const aTotal = label("0");
+    aTotal.style.fontSize = "1.2em";
+    aTotal.style.color = "var(--silver)";
+    aCol.append(aChip, aCards, aTotal);
+
+    const bCol = el("div", "scene-labeled");
+    const bChip = el("span", "player-chip");
+    bChip.textContent = "B";
+    const bCards = el("div", "scene-row");
+    const bTotal = label("0");
+    bTotal.style.fontSize = "1.2em";
+    bTotal.style.color = "var(--gold)";
+    bCol.append(bChip, bCards, bTotal);
+
+    row.append(aCol, bCol);
     s.appendChild(row);
-    const win = label("B wins (had a 4)", "anim-pop");
+
+    // A wins 2 and 3 (total 5); B wins 1 and 4 (total 5)
+    const aCard1 = pointCard("2", "anim-deal");
+    const aCard2 = pointCard("3", "anim-deal");
+    const bCard1 = pointCard("1", "anim-deal");
+    const bCard2 = pointCard("4", "anim-deal");
+    delay(aCard1, 200);
+    delay(bCard1, 400);
+    aCards.append(aCard1);
+    bCards.append(bCard1);
+    schedule(() => aTotal.textContent = "A: 2", 900);
+    schedule(() => bTotal.textContent = "B: 1", 1000);
+    schedule(() => { aCards.append(aCard2); aTotal.textContent = "A: 5"; }, 1400);
+    schedule(() => { bCards.append(bCard2); bTotal.textContent = "B: 5"; }, 1800);
+    // tie broken: B's 4 is the higher single point
+    schedule(() => {
+        bCard2.classList.add("scene-winner", "anim-glow");
+        aCard1.classList.add("scene-void");
+        aCard2.classList.add("scene-void");
+        aTotal.style.color = "var(--red)";
+        aTotal.textContent = "A: 5";
+        bTotal.style.color = "var(--gold)";
+        bTotal.textContent = "B: 5";
+    }, 2400);
+    const win = label("B wins on the higher single point card", "anim-pop");
     win.style.color = "var(--gold)";
-    delay(win, 700);
-    s.appendChild(win);
+    schedule(() => s.appendChild(win), 3000);
     push(root, "Highest total wins. On a tie, the higher single point card wins.");
 }
 
@@ -365,14 +427,14 @@ export const guideTexts: string[] = [
     "High and Low",
     "There will be nine rounds. Of the 10 point cards, 9 cards will be shown each round. One card is removed.",
     "Each player will be given 1 to 10 number cards, a reverse card, which is a special card, and a normal card. The back of number cards 1 to 5 is blue, and the back of number cards 6 to 10 is gold.",
-    "After the point card is revealed, you put one number card on one special card and submit. Once submitted, the special cards are revealed first, which decides the number advantage of the round. If an odd number of Reverse cards is submitted (4 players: 3 Normal, 1 Reverse), the advantage reverses and the lowest number wins.",
-    "If an even number of Reverse cards is submitted (4 players: 2 Normal, 2 Reverse), they cancel each other out and higher numbers remain advantageous.",
+    "After the point card is revealed, you put one number card on one special card and submit. Once submitted, the special cards are revealed first, which decides the number advantage of the round. If an odd number of Reverse cards is submitted, the advantage reverses and the lowest number wins.",
+    "If an even number of Reverse cards is submitted, they cancel each other out and higher numbers remain advantageous.",
     "Players can use the Reverse card only once throughout the game.",
     "The starting player reveals the front of their number card, and the player who submitted the most advantageous card wins the point card of the round.",
     "If you do not wish to reveal the front of your card, you can Pass. However, the starting player and anyone who passed in the previous round must reveal the front of their number card.",
     "If the number cards submitted by the players overlap, the player with the next most advantageous card wins the point card. If there are no advantageous cards left, the point card is void.",
     "In a round with a negative point card, the winner may hand the negative point to one of the overlapped players (whether or not they passed).",
-    "Nine rounds are played, and the players with the highest total scores win. On a tie, the player with the higher single point card wins (A: 2 + 3 = 5 vs B: 1 + 4 = 5, B wins on the 4).",
+    "Nine rounds are played, and the players with the highest total scores win. On a tie, the player with the higher single point card wins.",
 ];
 
 export const primerScenes: SceneBuilder[] = [sceneTitle, sceneHand, sceneDeck];
