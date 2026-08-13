@@ -26,6 +26,9 @@ function rerender(): void {
 }
 
 export function showScreen(name: "lobby" | "table"): void {
+    const howto = el("howto");
+    if (name === "lobby") el("screen-lobby").appendChild(howto);
+    else el("center").appendChild(howto);
     el("screen-lobby").classList.toggle("hidden", name !== "lobby");
     el("screen-table").classList.toggle("hidden", name !== "table");
     el("btn-leave").classList.toggle("hidden", name !== "table");
@@ -69,6 +72,7 @@ export function renderTable(state: GameState, mySeat: number, myName: string): v
     renderHand(state);
     renderControls(state, mySeat);
     el("btn-start").classList.toggle("hidden", !(mySeat === 0 && state.phase === "Lobby"));
+    el("hint").textContent = hintLine(state, mySeat);
     const logEl = el("event-log");
     logEl.replaceChildren();
     for (const line of state.log.slice(-12)) {
@@ -146,6 +150,22 @@ function renderHand(state: GameState): void {
     }
 }
 
+function hintLine(state: GameState, mySeat: number): string {
+    if (state.phase === "Finished") return "Game over — final scores above";
+    if (state.phase !== "Submitting") return "";
+    if (!state.mySubmitted) {
+        return state.forcedRevealSeats.includes(mySeat)
+            ? "Your move — forced to reveal, pick a card and Submit"
+            : "Your move — pick a card, then Submit";
+    }
+    const waiting = state.seats
+        .map((s, i) => ({ s, i }))
+        .filter(({ s, i }) => i !== mySeat && !s.hasSubmitted && !s.isBot && !s.botControlled)
+        .map(({ s }) => s.name)
+        .filter(Boolean);
+    return waiting.length > 0 ? `Waiting for ${waiting.join(", ")}…` : "Waiting for bots…";
+}
+
 function renderControls(state: GameState, mySeat: number): void {
     const canSubmit = state.phase === "Submitting" && !state.mySubmitted;
     const forced = state.forcedRevealSeats.includes(mySeat);
@@ -155,14 +175,19 @@ function renderControls(state: GameState, mySeat: number): void {
     passBtn.textContent = pass ? "Pass ✓" : "Pass";
     passBtn.classList.toggle("selected", pass);
     passBtn.disabled = !canSubmit || forced;
+    passBtn.title = passBtn.disabled && forced
+        ? "The start seat is forced to reveal — cannot pass"
+        : "";
 
     const revBtn = el("btn-reverse") as HTMLButtonElement;
     revBtn.textContent = `Reverse (${revLeft})`;
     revBtn.classList.toggle("selected", reverse);
     revBtn.disabled = !canSubmit || revLeft <= 0;
+    revBtn.title = revBtn.disabled && revLeft <= 0 ? "No Reverse left" : "";
 
     const subBtn = el("btn-submit") as HTMLButtonElement;
     subBtn.disabled = !canSubmit || selectedCard == null;
+    subBtn.title = subBtn.disabled && canSubmit ? "Select a card first" : "";
 }
 
 export function renderReveal(state: GameState): void {

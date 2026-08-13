@@ -22,6 +22,18 @@
     </div>
     <div id="lobby-code" class="hidden">Room code: <strong></strong></div>
     <div id="lobby-seats"></div>
+    <details id="howto">
+      <summary>How to play</summary>
+      <ol>
+        <li>9 rounds — the top 2 scores win.</li>
+        <li>Each round deals a point prize (+ or −). Everyone plays ONE card from their hand (1–10), within 60 seconds.</li>
+        <li>HIGHEST: closest <em>above</em> the prize wins. An odd number of Reverse cards flips the round to LOWEST: closest <em>below</em> wins.</li>
+        <li>Two players playing the same card value are both voided — only survivors can win. No survivors = no winner, prize burned.</li>
+        <li>Pass burns a card but keeps it hidden — you are forced to reveal next round. The round's start seat cannot pass.</li>
+        <li>Reverse: one per player for the whole game.</li>
+        <li>Negative prize with voided players: the winner may gift the negative to one of them.</li>
+      </ol>
+    </details>
   </section>
 
   <section id="screen-table" class="hidden">
@@ -46,6 +58,7 @@
       <button id="btn-reverse">Reverse</button>
       <button id="btn-submit" disabled>Submit</button>
     </div>
+    <div id="hint"></div>
   </section>
 
   <div id="overlay-gift" class="overlay hidden"><h2>Gift the negative</h2><div id="gift-targets"></div></div>

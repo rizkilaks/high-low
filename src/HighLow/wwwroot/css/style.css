@@ -219,3 +219,12 @@ input {
 .winner-name { color: var(--gold); font-family: Georgia, 'Times New Roman', serif; font-weight: 700; letter-spacing: 1px; }
 #finished-scores { border-collapse: collapse; background: var(--panel); border: 1px solid var(--panel-edge); }
 #finished-scores td { border: 1px solid var(--panel-edge); padding: 6px 18px; text-align: center; }
+
+#howto {
+  margin: 12px auto 0; width: 92%; max-width: 540px; text-align: left;
+  font-size: 0.8em; color: var(--silver);
+  border: 1px solid var(--panel-edge); background: var(--panel); padding: 6px 12px;
+}
+#howto summary { cursor: pointer; color: var(--gold); letter-spacing: 1px; font-weight: 700; }
+#howto ol { margin: 6px 0; padding-left: 1.2em; line-height: 1.6; }
+#hint { color: var(--gold); font-size: 0.85em; min-height: 1.2em; padding: 2px 0 8px; }
