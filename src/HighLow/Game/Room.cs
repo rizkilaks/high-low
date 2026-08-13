@@ -310,7 +310,8 @@ public sealed class Room
             resolution.Direction,
             _submissions.Where(kv => kv.Value.Special == Special.Reverse).Select(kv => kv.Key).ToArray()));
         Push(new CardsRevealedEvent(
-            resolution.Cards.Select(c => new PublicCard(c.Seat, c.Hidden ? null : c.CardValue, c.Hidden)).ToArray(),
+            resolution.Cards.Select(c => new PublicCard(c.Seat, c.Hidden ? null : c.CardValue, c.Hidden,
+                c.Hidden ? (c.CardValue <= 5 ? 0 : 1) : null)).ToArray(),
             resolution.VoidedSeats));
         Touch(now);
 
@@ -369,5 +370,51 @@ public sealed class Room
             BeginRoundLocked(now);
         }
         return DrainOutbox();
+    }
+
+    public async Task<(bool Ok, string? Error, IReadOnlyList<object> Events)> RematchAsync(DateTimeOffset now)
+    {
+        await _gate.WaitAsync();
+        try
+        {
+            if (Phase != RoomPhase.Finished) return (false, "not finished", DrainOutbox());
+
+            foreach (var s in _seats)
+            {
+                s.Hand.Clear();
+                s.Hand.AddRange(Enumerable.Range(1, 10));
+                s.ReverseLeft = 1;
+                s.Score = 0;
+                s.TieAbs = 0;
+                s.TieMax = 0;
+                s.HasSubmitted = false;
+                s.Submission = null;
+                s.MissedSubmissions = 0;
+                s.PassedLastRound = false;
+                s.BotControlled = false;
+                s.Connected = true;
+                s.DisconnectedAtUtc = null;
+            }
+
+            Round = 0;
+            StartSeat = 0;
+            _prize = null;
+            _direction = null;
+            _winnerSeat = null;
+            _winnerCardVisible = null;
+            _hiddenWinnerCard = null;
+            _giftTargetSeat = null;
+            _burnedPrize = null;
+            _forcedReveal = new List<int>();
+            _voidedThisRound = new List<int>();
+            _submissions = new Dictionary<int, Submission>();
+            _deadlineUtcMs = 0;
+            _finishedWinners = null;
+            Phase = RoomPhase.Lobby;
+            Touch(now);
+            Push(new LobbyStateEvent(Code, SeatsInfo(), _seats.Count > 0));
+            return (true, null, DrainOutbox());
+        }
+        finally { _gate.Release(); }
     }
 }

@@ -323,4 +323,60 @@ public class RoomTests
         Assert.True(reconnect.Ok);
         Assert.Equal(2, reconnect.View!.WinnerSeats!.Count);
     }
+
+    [Fact]
+    public async Task Hidden_passed_card_carries_tier_in_public_card()
+    {
+        var clock = new FakeClock();
+        var room = await HumanRoom(clock, NormalDeck);
+        await room.SubmitAsync(0, 2, Special.Normal, false, clock.UtcNow);
+        await room.SubmitAsync(1, 8, Special.Normal, true, clock.UtcNow);
+        await room.SubmitAsync(2, 4, Special.Normal, false, clock.UtcNow);
+        var events = (await room.SubmitAsync(3, 6, Special.Normal, false, clock.UtcNow)).Events;
+
+        var revealed = events.OfType<CardsRevealedEvent>().Single();
+        var hidden = revealed.Cards.Single(c => c.Hidden);
+        Assert.Equal(1, hidden.Seat);
+        Assert.Null(hidden.Card);
+        Assert.Equal(1, hidden.Tier); // 8 is in the 6-10 gold tier
+
+        foreach (var visible in revealed.Cards.Where(c => !c.Hidden))
+            Assert.Null(visible.Tier);
+    }
+
+    [Fact]
+    public async Task Rematch_resets_finished_room_for_same_players()
+    {
+        var clock = new FakeClock();
+        var room = await HumanRoom(clock, NormalDeck);
+        int[][] perSeat = new[]
+        {
+            new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9 },
+            new[] { 5, 6, 7, 8, 9, 10, 2, 3, 4 },
+            new[] { 8, 9, 10, 1, 2, 3, 4, 5, 6 },
+            new[] { 5, 6, 7, 8, 9, 10, 2, 3, 4 },
+        };
+        for (var round = 1; round <= 9; round++)
+        {
+            await room.SubmitAsync(0, perSeat[0][round - 1], Special.Normal, false, clock.UtcNow);
+            await room.SubmitAsync(1, perSeat[1][round - 1], Special.Normal, false, clock.UtcNow);
+            await room.SubmitAsync(2, perSeat[2][round - 1], Special.Normal, false, clock.UtcNow);
+            await room.SubmitAsync(3, perSeat[3][round - 1], Special.Normal, false, clock.UtcNow);
+        }
+        Assert.Equal(RoomPhase.Finished, room.Phase);
+
+        var (ok, _, events) = await room.RematchAsync(clock.UtcNow);
+        Assert.True(ok);
+        Assert.Equal(RoomPhase.Lobby, room.Phase);
+        Assert.Equal(0, room.Round);
+        Assert.Contains(events, e => e is LobbyStateEvent);
+        var view = await room.ViewAsync(0);
+        Assert.Equal(4, view.Seats.Count);
+        Assert.All(view.Seats, s => Assert.Equal(0, s.Score));
+        Assert.All(view.Seats, s => Assert.Equal(1, s.ReverseLeft));
+        Assert.Equal(10, view.MyHand.Count);
+
+        var bad = await room.RematchAsync(clock.UtcNow);
+        Assert.False(bad.Ok);
+    }
 }
