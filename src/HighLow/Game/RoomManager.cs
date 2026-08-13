@@ -80,6 +80,13 @@ public sealed class RoomManager
         finally { _gate.Release(); }
     }
 
+    public async Task<IReadOnlyList<Room>> GetRooms()
+    {
+        await _gate.WaitAsync();
+        try { return _rooms.Values.ToList(); }
+        finally { _gate.Release(); }
+    }
+
     public async Task<IReadOnlyList<Room>> SweepAsync(DateTimeOffset now)
     {
         await _gate.WaitAsync();

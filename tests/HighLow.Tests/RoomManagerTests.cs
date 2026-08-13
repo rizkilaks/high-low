@@ -134,4 +134,21 @@ public class RoomManagerTests
         Assert.DoesNotContain(active.Room, closed);
         Assert.Null(await m.FindRoomAsync(finished.Room!.Code));
     }
+
+    [Fact]
+    public async Task GetRooms_returns_snapshot_of_all_rooms_until_swept()
+    {
+        var m = CreateManager();
+        var a = await m.CreateRoomAsync("a", "1.1.1.1", true, null, Clock.UtcNow);
+        var b = await m.CreateRoomAsync("b", "2.2.2.2", true, null, Clock.UtcNow);
+
+        var rooms = await m.GetRooms();
+        Assert.Equal(2, rooms.Count);
+        Assert.Contains(a.Room, rooms);
+        Assert.Contains(b.Room, rooms);
+
+        Clock.Advance(TimeSpan.FromMinutes(11));
+        await m.SweepAsync(Clock.UtcNow);
+        Assert.Empty(await m.GetRooms());
+    }
 }

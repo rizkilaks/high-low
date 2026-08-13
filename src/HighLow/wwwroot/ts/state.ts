@@ -22,6 +22,7 @@ export interface SeatState {
     score: number;
     reverseLeft: number;
     handCount: number;
+    hasSubmitted: boolean;
 }
 
 export interface GameState {
@@ -56,7 +57,7 @@ export interface Reaction {
     overlay?: "gift" | "finished" | null;
 }
 
-const EMPTY_SEAT: SeatState = { name: "", isBot: false, botControlled: false, connected: true, score: 0, reverseLeft: 0, handCount: 0 };
+const EMPTY_SEAT: SeatState = { name: "", isBot: false, botControlled: false, connected: true, score: 0, reverseLeft: 0, handCount: 0, hasSubmitted: false };
 
 export function initialState(roomCode: string, mySeat: number, myToken: string): GameState {
     return {
@@ -79,7 +80,7 @@ export function initialState(roomCode: string, mySeat: number, myToken: string):
 function toSeatState(s: SeatInfo): SeatState {
     return {
         name: s.name, isBot: s.isBot, botControlled: s.botControlled, connected: s.connected,
-        score: s.score, reverseLeft: s.reverseLeft, handCount: s.handCount,
+        score: s.score, reverseLeft: s.reverseLeft, handCount: s.handCount, hasSubmitted: s.hasSubmitted,
     };
 }
 
