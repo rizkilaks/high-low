@@ -4,6 +4,18 @@
 
 export type SceneBuilder = (root: HTMLElement) => void;
 
+let timers = new Set<number>();
+
+function schedule(fn: () => void, ms: number): void {
+    const t = window.setTimeout(fn, ms);
+    timers.add(t);
+}
+
+function clearTimers(): void {
+    timers.forEach(t => window.clearTimeout(t));
+    timers.clear();
+}
+
 function el(tag: string, cls?: string): HTMLElement {
     const e = document.createElement(tag);
     if (cls) e.className = cls;
@@ -20,16 +32,40 @@ function tierCard(value: string, tier: "blue" | "gold", anim = ""): HTMLElement 
     return card(value, `card-face ${tier}`, anim);
 }
 
-function specialCard(label: string, anim = ""): HTMLElement {
-    return card(label, "card-face special", anim);
-}
-
 function pointCard(value: string, anim = ""): HTMLElement {
     return card(value, "card-face point", anim);
 }
 
-function label(text: string, anim = ""): HTMLElement {
-    return el("div", "scene-label" + (anim ? ` ${anim}` : ""));
+function labeled(labelText: string, inner: HTMLElement, anim = ""): HTMLElement {
+    const wrap = el("div", "scene-labeled" + (anim ? ` ${anim}` : ""));
+    const lbl = el("div", "scene-label");
+    lbl.textContent = labelText;
+    wrap.append(lbl, inner);
+    return wrap;
+}
+
+function playerSlot(n: number, inner: HTMLElement, anim = "", chipCls = ""): HTMLElement {
+    const wrap = el("div", "scene-labeled" + (anim ? ` ${anim}` : ""));
+    const chip = el("span", "player-chip" + (chipCls ? ` ${chipCls}` : ""));
+    chip.textContent = `P${n}`;
+    wrap.append(chip, inner);
+    return wrap;
+}
+
+function playerStack(n: number, num: string, tier: "blue" | "gold", spec: "Normal" | "Reverse",
+    anim = "", chipCls = ""): { wrap: HTMLElement; special: HTMLElement; number: HTMLElement; specFor: "Normal" | "Reverse" } {
+    const special = card("?", "card-face hidden");
+    const number = tierCard(num, tier, anim);
+    const stack = el("div", "scene-stack");
+    stack.append(special, number);
+    return { wrap: playerSlot(n, stack, "anim-fade", chipCls), special, number, specFor: spec };
+}
+
+function revealSpecial(special: HTMLElement, spec: "Normal" | "Reverse", ms: number): void {
+    schedule(() => {
+        special.textContent = spec === "Reverse" ? "⟳" : "—";
+        special.className = "card-face special anim-flip" + (spec === "Reverse" ? " scene-rev" : "");
+    }, ms);
 }
 
 function caption(text: string): HTMLElement {
@@ -37,6 +73,7 @@ function caption(text: string): HTMLElement {
 }
 
 function stage(root: HTMLElement): HTMLElement {
+    clearTimers();
     root.replaceChildren();
     const s = el("div", "scene-stage");
     root.appendChild(s);
@@ -52,6 +89,26 @@ function push(root: HTMLElement, text: string): HTMLElement {
 function delay(e: HTMLElement, ms: number): HTMLElement {
     e.style.animationDelay = `${ms}ms`;
     return e;
+}
+
+function flipToBack(cardEl: HTMLElement, tier: "blue" | "gold", ms: number): void {
+    schedule(() => {
+        cardEl.textContent = "?";
+        cardEl.className = `card-face hidden ${tier} anim-flip`;
+    }, ms);
+}
+
+function flipToFront(cardEl: HTMLElement, value: string, tier: "blue" | "gold", ms: number): void {
+    schedule(() => {
+        cardEl.textContent = value;
+        cardEl.className = `card-face ${tier} anim-flip`;
+    }, ms);
+}
+
+function cardRow(anim = "anim-deal", gap = 6): HTMLElement {
+    const row = el("div", "scene-row");
+    row.style.gap = `${gap}px`;
+    return row;
 }
 
 const POINT_VALUES = ["-1", "2", "-3", "4", "-5", "6", "-7", "8", "-9", "+10"];
@@ -77,95 +134,111 @@ function sceneTitle(root: HTMLElement): void {
 function sceneDeck(root: HTMLElement): void {
     const s = stage(root);
     s.style.flexDirection = "column";
-    const row = el("div", "card-fan");
+    s.style.gap = "16px";
+    const row = cardRow();
     POINT_VALUES.forEach((v, i) => {
         const c = pointCard(v, "anim-deal");
-        delay(c, i * 70);
+        delay(c, i * 60);
         row.appendChild(c);
     });
     s.appendChild(row);
-    const removed = pointCard("?", "anim-slide-away");
-    const deckRow = el("div");
-    deckRow.style.marginTop = "16px";
-    const deck = specialCard("DECK", "anim-pop");
-    const cap = push(root, "10 point cards. One is removed. 9 are played over nine rounds.");
-    delay(removed, 900);
-    removed.style.position = "absolute";
-    deckRow.append(deck, removed);
-    s.appendChild(deckRow);
-    void cap;
+    // one card slides away (removed)
+    schedule(() => {
+        const last = row.children[row.children.length - 1] as HTMLElement;
+        last.classList.add("anim-slide-away");
+    }, 1000);
+    // deck pile: single card back with a "Deck" label above
+    schedule(() => {
+        const deck = labeled("Deck", card("?", "card-face hidden"), "anim-pop");
+        s.appendChild(deck);
+    }, 1600);
+    push(root, "There will be nine rounds. Of the 10 point cards, 9 cards will be shown each round. One card is removed.");
 }
 
-// 3 — hand of 1-10 + Reverse + Normal, colored backs
+// 3 — hand of 1-10, Reverse + Normal, colored backs flip in sequence
 function sceneHand(root: HTMLElement): void {
     const s = stage(root);
     s.style.flexDirection = "column";
-    const fan = el("div", "card-fan");
+    s.style.gap = "16px";
+    const row = cardRow();
+    const cards: HTMLElement[] = [];
     for (let v = 1; v <= 10; v++) {
         const c = tierCard(String(v), v <= 5 ? "blue" : "gold", "anim-deal");
-        delay(c, v * 50);
-        fan.appendChild(c);
+        delay(c, v * 40);
+        row.appendChild(c);
+        cards.push(c);
     }
-    s.appendChild(fan);
-    const specials = el("div");
-    specials.style.marginTop = "14px";
-    specials.style.display = "flex";
-    specials.style.gap = "10px";
-    const rev = specialCard("REVERSE", "anim-pop");
-    const norm = specialCard("NORMAL", "anim-pop");
-    delay(rev, 650);
-    delay(norm, 750);
+    s.appendChild(row);
+    // Reverse (UNO-style symbol) and Normal (hyphen) cards, labels above
+    const specials = el("div", "scene-row");
+    specials.style.gap = "18px";
+    const rev = labeled("Reverse", card("⟳", "card-face special"), "anim-pop");
+    const norm = labeled("Normal", card("—", "card-face special"), "anim-pop");
+    delay(rev, 700);
+    delay(norm, 800);
     specials.append(rev, norm);
     s.appendChild(specials);
-    const backs = el("div");
-    backs.style.marginTop = "12px";
-    backs.style.display = "flex";
-    backs.style.gap = "10px";
-    const b1 = card("?", "card-face hidden blue anim-pop");
-    const b2 = card("?", "card-face hidden gold anim-pop");
-    delay(b1, 950);
-    delay(b2, 1050);
-    backs.append(b1, b2);
-    s.appendChild(backs);
-    push(root, "Hand of 1 to 10, one Reverse, one Normal. Blue backs 1 to 5, gold backs 6 to 10.");
+    // "The back of number cards 1 to 5 is blue" — flip 1-5 to blue backs
+    cards.slice(0, 5).forEach((c, i) => flipToBack(c, "blue", 1400 + i * 120));
+    // "and the back of number cards 6 to 10 is gold" — flip 6-10 to gold backs
+    cards.slice(5).forEach((c, i) => flipToBack(c, "gold", 2600 + i * 120));
+    push(root, "Each player will be given 1 to 10 number cards, a reverse card, which is a special card, and a normal card. The back of number cards 1 to 5 is blue, and the back of number cards 6 to 10 is gold.");
 }
 
 // 4 — odd reverses flip to LOWEST
 function sceneOddReverse(root: HTMLElement): void {
     const s = stage(root);
-    const row = el("div");
-    row.style.display = "flex";
-    row.style.gap = "12px";
-    row.append(
-        tierCard("2", "blue", "anim-deal"),
-        tierCard("7", "gold", "anim-deal"),
-        tierCard("5", "blue", "anim-deal"),
-        tierCard("9", "gold", "anim-deal"),
-    );
+    s.style.flexDirection = "column";
+    const row = cardRow(undefined, 16);
+    const stacks = [
+        playerStack(1, "2", "blue", "Normal", "anim-deal"),
+        playerStack(2, "7", "gold", "Normal", "anim-deal"),
+        playerStack(3, "5", "blue", "Normal", "anim-deal"),
+        playerStack(4, "9", "gold", "Reverse", "anim-deal"),
+    ];
+    stacks.forEach((st, i) => {
+        delay(st.number, i * 120);
+        row.appendChild(st.wrap);
+    });
     s.appendChild(row);
+    stacks.forEach((st, i) => revealSpecial(st.special, st.specFor, 900 + i * 200));
     const dir = label("LOWEST", "anim-pop");
     dir.style.color = "var(--red)";
-    delay(dir, 800);
+    delay(dir, 2200);
     s.appendChild(dir);
     push(root, "3 Normal, 1 Reverse. Odd Reverse flips the advantage. Lowest wins.");
 }
 
-// 5 — even reverses cancel
+function label(text: string, anim = ""): HTMLElement {
+    const l = el("div", "scene-label" + (anim ? ` ${anim}` : ""));
+    l.textContent = text;
+    return l;
+}
+
+// 5 — even reverses cancel (they fade out, direction stays HIGHEST)
 function sceneEvenReverse(root: HTMLElement): void {
     const s = stage(root);
-    const row = el("div");
-    row.style.display = "flex";
-    row.style.gap = "12px";
-    row.append(
-        tierCard("6", "gold", "anim-deal"),
-        tierCard("3", "blue", "anim-deal"),
-        tierCard("8", "gold", "anim-deal"),
-        tierCard("1", "blue", "anim-deal"),
-    );
+    s.style.flexDirection = "column";
+    const row = cardRow(undefined, 16);
+    const stacks = [
+        playerStack(1, "6", "gold", "Normal", "anim-deal"),
+        playerStack(2, "3", "blue", "Reverse", "anim-deal"),
+        playerStack(3, "8", "gold", "Normal", "anim-deal"),
+        playerStack(4, "1", "blue", "Reverse", "anim-deal"),
+    ];
+    stacks.forEach((st, i) => {
+        delay(st.number, i * 120);
+        row.appendChild(st.wrap);
+    });
     s.appendChild(row);
+    stacks.forEach((st, i) => revealSpecial(st.special, st.specFor, 900 + i * 200));
+    // the two reverses cancel out (fade away)
+    stacks.filter(st => st.specFor === "Reverse").forEach((st, i) => {
+        schedule(() => st.special.classList.add("anim-fade-out"), 1800 + i * 250);
+    });
     const dir = label("HIGHEST", "anim-pop");
     dir.style.color = "var(--gold)";
-    delay(dir, 800);
+    delay(dir, 2600);
     s.appendChild(dir);
     push(root, "2 Normal, 2 Reverse. They cancel out. Highest wins.");
 }
@@ -174,12 +247,11 @@ function sceneEvenReverse(root: HTMLElement): void {
 function sceneReverseOnce(root: HTMLElement): void {
     const s = stage(root);
     s.style.flexDirection = "column";
-    const rev = specialCard("REVERSE", "anim-deal");
+    const rev = labeled("Reverse", card("⟳", "card-face special"), "anim-deal");
     s.appendChild(rev);
-    const counter = el("div", "scene-label anim-pop");
-    delay(counter, 500);
-    counter.textContent = "1 left";
+    const counter = label("1 left", "anim-pop");
     counter.style.color = "var(--red)";
+    delay(counter, 500);
     s.appendChild(counter);
     push(root, "You have only one Reverse for the whole game.");
 }
@@ -187,38 +259,32 @@ function sceneReverseOnce(root: HTMLElement): void {
 // 7 — starting player reveals, best wins
 function sceneReveal(root: HTMLElement): void {
     const s = stage(root);
-    const row = el("div");
-    row.style.display = "flex";
-    row.style.gap = "12px";
-    const start = tierCard("5", "blue", "anim-flip");
-    delay(start, 300);
-    const winner = tierCard("10", "gold", "anim-flip");
-    delay(winner, 600);
-    winner.classList.add("scene-winner", "anim-glow");
-    const c1 = tierCard("2", "blue", "anim-flip");
-    const c2 = tierCard("4", "blue", "anim-flip");
-    delay(c1, 900);
-    delay(c2, 1000);
-    row.append(start, c1, c2, winner);
+    const row = cardRow(undefined, 14);
+    const start = playerStack(1, "5", "blue", "Normal", "anim-flip", "start");
+    const c1 = playerStack(2, "2", "blue", "Normal", "anim-flip");
+    const c2 = playerStack(3, "4", "blue", "Normal", "anim-flip");
+    const winner = playerStack(4, "10", "gold", "Normal", "anim-flip");
+    delay(start.number, 300);
+    delay(winner.number, 600);
+    winner.number.classList.add("scene-winner", "anim-glow");
+    delay(c1.number, 900);
+    delay(c2.number, 1000);
+    row.append(start.wrap, c1.wrap, c2.wrap, winner.wrap);
     s.appendChild(row);
-    push(root, "Starting player reveals first. The most advantageous card wins.");
+    push(root, "The starting player reveals first. The most advantageous card wins.");
 }
 
 // 8 — pass, forced reveal
 function scenePass(root: HTMLElement): void {
     const s = stage(root);
-    const row = el("div");
-    row.style.display = "flex";
-    row.style.gap = "12px";
-    row.append(
-        tierCard("6", "gold", "anim-deal"),
-        tierCard("3", "blue", "anim-deal"),
-        tierCard("8", "gold", "anim-deal"),
-    );
-    const passCard = card("PASS", "card-face hidden anim-pop");
-    delay(passCard, 500);
-    passCard.classList.add("anim-shake");
-    row.appendChild(passCard);
+    const row = cardRow(undefined, 14);
+    const p1 = playerStack(1, "6", "gold", "Normal", "anim-deal");
+    const p2 = playerStack(2, "3", "blue", "Normal", "anim-deal");
+    const p3 = playerStack(3, "8", "gold", "Normal", "anim-deal");
+    const p4 = playerSlot(4, card("?", "card-face hidden anim-pop"), "anim-fade", "pass");
+    delay(p4, 500);
+    p4.querySelector(".card-face")?.classList.add("anim-shake");
+    row.append(p1.wrap, p2.wrap, p3.wrap, p4);
     s.appendChild(row);
     push(root, "You can Pass to hide your card. But the starting player and previous passers must reveal.");
 }
@@ -226,19 +292,17 @@ function scenePass(root: HTMLElement): void {
 // 9 — overlap voids, next best wins; all void burns
 function sceneVoid(root: HTMLElement): void {
     const s = stage(root);
-    const row = el("div");
-    row.style.display = "flex";
-    row.style.gap = "12px";
-    const v1 = tierCard("7", "gold", "anim-pop");
-    const v2 = tierCard("7", "gold", "anim-pop");
-    delay(v2, 200);
-    const next = tierCard("9", "gold", "anim-pop");
-    delay(next, 600);
-    next.classList.add("scene-winner", "anim-glow");
-    row.append(v1, next, v2);
+    const row = cardRow(undefined, 14);
+    const v1 = playerStack(1, "7", "gold", "Normal", "anim-pop");
+    const next = playerStack(2, "9", "gold", "Normal", "anim-pop");
+    const v2 = playerStack(3, "7", "gold", "Normal", "anim-pop");
+    delay(v2.wrap, 200);
+    delay(next.wrap, 600);
+    next.number.classList.add("scene-winner", "anim-glow");
+    row.append(v1.wrap, next.wrap, v2.wrap);
     s.appendChild(row);
-    v1.classList.add("scene-void", "anim-shake");
-    v2.classList.add("scene-void", "anim-shake");
+    v1.number.classList.add("scene-void", "anim-shake");
+    v2.number.classList.add("scene-void", "anim-shake");
     push(root, "Overlapping cards are voided. The next best card wins. None left? The point burns.");
 }
 
@@ -247,17 +311,15 @@ function sceneGift(root: HTMLElement): void {
     const s = stage(root);
     const p = pointCard("-3", "anim-deal");
     s.appendChild(p);
-    const row = el("div");
+    const row = cardRow(undefined, 14);
     row.style.marginTop = "14px";
-    row.style.display = "flex";
-    row.style.gap = "12px";
-    const g = tierCard("4", "blue", "anim-pop");
-    delay(g, 600);
-    g.classList.add("scene-winner", "anim-glow");
-    const target = tierCard("4", "blue", "anim-pop");
-    delay(target, 800);
-    target.classList.add("scene-void");
-    row.append(g, target);
+    const g = playerStack(1, "4", "blue", "Normal", "anim-pop");
+    const target = playerStack(2, "4", "blue", "Normal", "anim-pop");
+    delay(g.wrap, 600);
+    g.number.classList.add("scene-winner", "anim-glow");
+    delay(target.wrap, 800);
+    target.number.classList.add("scene-void");
+    row.append(g.wrap, target.wrap);
     s.appendChild(row);
     push(root, "Negative point, overlapped players. The winner hands the negative to one of them.");
 }
@@ -266,8 +328,7 @@ function sceneGift(root: HTMLElement): void {
 function sceneScores(root: HTMLElement): void {
     const s = stage(root);
     s.style.flexDirection = "column";
-    const row = el("div");
-    row.style.display = "flex";
+    const row = el("div", "scene-row");
     row.style.gap = "24px";
     const a = el("div");
     a.textContent = "A: 5";
@@ -303,7 +364,7 @@ export const guideScenes: SceneBuilder[] = [
 export const guideTexts: string[] = [
     "High and Low",
     "There will be nine rounds. Of the 10 point cards, 9 cards will be shown each round. One card is removed.",
-    "Each player is given number cards 1 to 10 (1, 2, 3, 4, 5, 6, 7, 8, 9, 10), a Reverse card (special) and a Normal card. The back of number cards 1 to 5 is blue; the back of number cards 6 to 10 is gold.",
+    "Each player will be given 1 to 10 number cards, a reverse card, which is a special card, and a normal card. The back of number cards 1 to 5 is blue, and the back of number cards 6 to 10 is gold.",
     "After the point card is revealed, you put one number card on one special card and submit. Once submitted, the special cards are revealed first, which decides the number advantage of the round. If an odd number of Reverse cards is submitted (4 players: 3 Normal, 1 Reverse), the advantage reverses and the lowest number wins.",
     "If an even number of Reverse cards is submitted (4 players: 2 Normal, 2 Reverse), they cancel each other out and higher numbers remain advantageous.",
     "Players can use the Reverse card only once throughout the game.",

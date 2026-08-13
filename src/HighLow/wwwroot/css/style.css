@@ -290,10 +290,30 @@ input {
   border-color: #fff;
 }
 
-.card-fan {
-  display: inline-flex; gap: 2px; align-items: center; justify-content: center;
+.scene-row {
+  display: flex; align-items: center; justify-content: center; flex-wrap: wrap;
 }
-.card-fan .card-face { margin-right: -24px; }
+.scene-labeled {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+}
+.player-chip {
+  padding: 1px 8px; border-radius: 10px;
+  border: 1px solid var(--silver); color: var(--silver);
+  font-size: 0.7em; letter-spacing: 1px; font-weight: 700;
+}
+.player-chip.start { border-color: var(--blue); color: var(--blue); }
+.player-chip.pass { border-color: var(--red); color: var(--red); }
+.scene-stack {
+  position: relative;
+  width: 48px; height: 64px;
+}
+.scene-stack .card-face {
+  position: absolute;
+  min-width: 0; min-height: 0; width: 40px; height: 56px; padding: 0;
+}
+.scene-stack .card-face.hidden { z-index: 1; }
+.scene-stack .card-face:not(.hidden) { z-index: 2; transform: translate(3px, 3px); }
+.scene-rev { border-color: var(--red) !important; box-shadow: 0 0 14px rgba(232, 64, 64, 0.6) !important; }
 
 @keyframes hl-deal {
   0% { transform: translateY(-80px) rotate(-8deg); opacity: 0; }
@@ -329,6 +349,10 @@ input {
   25% { transform: translateX(-6px); }
   75% { transform: translateX(6px); }
 }
+@keyframes hl-fade-out {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
 .anim-deal { animation: hl-deal 0.5s ease-out both; }
 .anim-slide-up { animation: hl-slide-up 0.5s ease-out both; }
 .anim-fade { animation: hl-fade 0.6s ease-out both; }
@@ -337,6 +361,7 @@ input {
 .anim-flip { animation: hl-flip-in 0.5s ease-out both; }
 .anim-slide-away { animation: hl-slide-away 0.5s ease-in both; }
 .anim-shake { animation: hl-shake 0.4s ease-in-out both; }
+.anim-fade-out { animation: hl-fade-out 0.6s ease-in both; }
 
 #overlay-gift { gap: 18px; }
 #overlay-gift #gift-targets button { min-width: 120px; }
