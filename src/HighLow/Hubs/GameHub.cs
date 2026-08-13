@@ -106,6 +106,17 @@ public sealed class GameHub : Hub
         return view;
     }
 
+    public async Task<RoomView?> GetView(string roomCode, string token)
+    {
+        var room = await _rooms.FindRoomAsync(roomCode);
+        if (room is null) return null;
+
+        var seat = room.Seats.ToList().FindIndex(s => s.Token == token);
+        if (seat < 0) return null;
+
+        return await room.ViewAsync(seat);
+    }
+
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         if (Connections.TryRemove(Context.ConnectionId, out var entry))
@@ -149,7 +160,7 @@ public sealed class GameHub : Hub
         }
     }
 
-    private static string SignalRName(object e) => e switch
+    internal static string SignalRName(object e) => e switch
     {
         LobbyStateEvent => "LobbyState",
         GameStartedEvent => "GameStarted",

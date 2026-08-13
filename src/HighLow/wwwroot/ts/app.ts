@@ -105,12 +105,30 @@ async function enterRoom(promise: Promise<JoinedRoom | null>, name: string): Pro
     state = initialState(joined.roomCode, joined.seat, joined.token);
     showScreen("table");
     render();
+    await refreshView();
+}
+
+// ponytail: hand-only merge — a full view replace could clobber freshly revealed
+// cards across the round boundary; the hand is the only field the client lacks.
+async function refreshView(): Promise<void> {
+    if (!state.roomCode || !state.myToken || state.mySubmitted) return;
+    try {
+        const view = await conn.invoke<RoomView | null>("getView", state.roomCode, state.myToken);
+        if (!view) return;
+        state = { ...state, myHand: view.myHand };
+        render();
+    } catch {
+        // transient — event flow resyncs next round
+    }
 }
 
 function wireEvents(): void {
     conn.on("lobbyState", (e: LobbyStateEvent) => handle("lobbyState", e));
     conn.on("gameStarted", (e: GameStartedEvent) => handle("gameStarted", e));
-    conn.on("roundStarted", (e: RoundStartedEvent) => handle("roundStarted", e));
+    conn.on("roundStarted", (e: RoundStartedEvent) => {
+        handle("roundStarted", e);
+        void refreshView();
+    });
     conn.on("specialsRevealed", (e: SpecialsRevealedEvent) => handle("specialsRevealed", e));
     conn.on("cardsRevealed", (e: CardsRevealedEvent) => handle("cardsRevealed", e));
     conn.on("roundResolved", (e: RoundResolvedEvent) => handle("roundResolved", e));
@@ -160,6 +178,7 @@ function wireButtons(): void {
         void (async () => {
             if (!(await ensureStarted())) return;
             await conn.invoke("startWithBots", state.roomCode, state.myToken).catch(() => false);
+            await refreshView();
         })();
     });
 
@@ -240,7 +259,9 @@ async function boot(): Promise<void> {
         }
         const secs = Math.max(0, Math.ceil((state.deadlineMs - Date.now()) / 1000));
         cd.classList.toggle("urgent", secs <= 10 && secs > 0);
-        cd.textContent = secs > 0 ? `${secs}s left` : "…";
+        cd.textContent = secs > 0
+            ? (state.phase === "Submitting" ? `${secs}s to submit` : `${secs}s left`)
+            : "…";
     }, 500);
 }
 
