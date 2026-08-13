@@ -11,7 +11,7 @@ public sealed record RoundStartedEvent(int Round, int TotalRounds, int Prize, in
     IReadOnlyList<int> ForcedRevealSeats, int? HiddenWinnerCardValue, long PhaseDeadlineUtcMs,
     IReadOnlyList<SeatInfo> Seats);
 public sealed record SpecialsRevealedEvent(int Reverses, SpecialDirection Direction, IReadOnlyList<int> ReverseSeats);
-public sealed record PublicCard(int Seat, int? Card, bool Hidden);
+public sealed record PublicCard(int Seat, int? Card, bool Hidden, int? Tier);
 public sealed record CardsRevealedEvent(IReadOnlyList<PublicCard> Cards, IReadOnlyList<int> VoidedSeats);
 public sealed record ScoreLine(int Seat, int Score, int TieAbs, int TieMax);
 public sealed record RoundResolvedEvent(int? WinnerSeat, int? WinnerCardValue, int? GiftTargetSeat,

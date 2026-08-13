@@ -134,7 +134,7 @@ export function applyEvent(state: GameState, evt: { name: string; payload: unkno
             state.winnerCardValue = null;
             state.giftTargetSeat = null;
             state.burnedPrize = null;
-            log(`round ${p.round} — prize ${p.prize}`);
+            log(`round ${p.round}, prize ${p.prize}`);
             break;
         }
         case "specialsRevealed": {
@@ -162,7 +162,7 @@ export function applyEvent(state: GameState, evt: { name: string; payload: unkno
             if (p.winnerSeat != null) {
                 const card = p.winnerCardValue != null ? `card ${p.winnerCardValue}` : "(hidden)";
                 const burned = p.burnedPrize != null ? ` · burned ${p.burnedPrize}` : "";
-                log(`winner: ${seatName(state, p.winnerSeat)} — ${card}${burned}`);
+                log(`winner: ${seatName(state, p.winnerSeat)}, ${card}${burned}`);
             } else {
                 log("no winner this round");
             }
@@ -183,7 +183,7 @@ export function applyEvent(state: GameState, evt: { name: string; payload: unkno
             state.phase = "Finished";
             state.deadlineMs = null;
             applyScores(state, p.scores);
-            log(`game over — winner: ${p.winnerSeats.map(w => seatName(state, w)).join(", ")}`);
+            log(`game over, winner: ${p.winnerSeats.map(w => seatName(state, w)).join(", ")}`);
             return { overlay: "finished" };
         }
         case "playerDisconnected":
@@ -196,7 +196,7 @@ export function applyEvent(state: GameState, evt: { name: string; payload: unkno
                 else if (evt.name === "playerReconnected") seat.connected = true;
                 else seat.botControlled = true;
             }
-            log(`${evt.name} — ${seatName(state, p.seat)} (${p.status})`);
+            log(`${evt.name}, ${seatName(state, p.seat)} (${p.status})`);
             break;
         }
         case "rejectedMessage":

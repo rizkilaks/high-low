@@ -106,6 +106,21 @@ public sealed class GameHub : Hub
         return view;
     }
 
+    public async Task<bool> Rematch(string roomCode, string token)
+    {
+        var room = await _rooms.FindRoomAsync(roomCode);
+        if (room is null) return await RejectAsync("room not found");
+
+        var seat = room.Seats.ToList().FindIndex(s => s.Token == token);
+        if (seat < 0) return await RejectAsync("unknown token");
+
+        var (ok, error, events) = await room.RematchAsync(_clock.UtcNow);
+        if (!ok) return await RejectAsync(error!);
+
+        await PushToRoomAsync(roomCode, events);
+        return true;
+    }
+
     public async Task<RoomView?> GetView(string roomCode, string token)
     {
         var room = await _rooms.FindRoomAsync(roomCode);

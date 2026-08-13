@@ -25,12 +25,10 @@ function rerender(): void {
     }
 }
 
-export function showScreen(name: "lobby" | "table"): void {
-    const howto = el("howto");
-    if (name === "lobby") el("screen-lobby").appendChild(howto);
-    else el("center").appendChild(howto);
+export function showScreen(name: "lobby" | "table" | "guide"): void {
     el("screen-lobby").classList.toggle("hidden", name !== "lobby");
     el("screen-table").classList.toggle("hidden", name !== "table");
+    el("screen-guide").classList.toggle("hidden", name !== "guide");
     el("btn-leave").classList.toggle("hidden", name !== "table");
 }
 
@@ -65,8 +63,8 @@ export function renderTable(state: GameState, mySeat: number, myName: string): v
     prizeEl.textContent = state.prize != null ? (state.prize > 0 ? `+${state.prize}` : String(state.prize)) : "";
     prizeEl.classList.toggle("negative", state.prize != null && state.prize < 0);
     el("direction").textContent =
-        state.direction === "Highest" ? "▲ HIGHEST" :
-        state.direction === "Lowest" ? "▼ LOWEST" : "";
+        state.direction === "Highest" ? "HIGHEST" :
+        state.direction === "Lowest" ? "LOWEST" : "";
     el("winner-line").textContent = winnerLine(state);
     for (let i = 0; i < 4; i++) renderSeatPanel(state, i, mySeat, myName);
     renderHand(state);
@@ -118,7 +116,7 @@ function renderSeatPanel(state: GameState, i: number, mySeat: number, myName: st
     if (state.reverseSeats.includes(i)) {
         const rev = document.createElement("span");
         rev.className = "card-face special";
-        rev.textContent = "⟳ REVERSE";
+        rev.textContent = "REVERSE";
         panel.appendChild(rev);
     }
 
@@ -151,12 +149,12 @@ function renderHand(state: GameState): void {
 }
 
 function hintLine(state: GameState, mySeat: number): string {
-    if (state.phase === "Finished") return "Game over — final scores above";
+    if (state.phase === "Finished") return "Game over, final scores above";
     if (state.phase !== "Submitting") return "";
     if (!state.mySubmitted) {
         return state.forcedRevealSeats.includes(mySeat)
-            ? "Your move — forced to reveal, pick a card and Submit"
-            : "Your move — pick a card, then Submit";
+            ? "Your move, forced to reveal. Pick a card and Submit"
+            : "Your move. Pick a card, then Submit";
     }
     const waiting = state.seats
         .map((s, i) => ({ s, i }))
@@ -176,7 +174,7 @@ function renderControls(state: GameState, mySeat: number): void {
     passBtn.classList.toggle("selected", pass);
     passBtn.disabled = !canSubmit || forced;
     passBtn.title = passBtn.disabled && forced
-        ? "The start seat is forced to reveal — cannot pass"
+        ? "The start seat is forced to reveal, cannot pass"
         : "";
 
     const revBtn = el("btn-reverse") as HTMLButtonElement;
@@ -208,9 +206,13 @@ export function renderReveal(state: GameState): void {
         const card = state.revealed.find(c => c.seat === i);
         if (!card) continue;
         const face = document.createElement("span");
-        face.className = "card-face" + (card.hidden ? " hidden" : "");
-        face.classList.add(card.card != null ? (card.card <= 5 ? "blue" : "gold") : "special");
-        face.textContent = card.hidden ? "?" : card.card != null ? String(card.card) : "—";
+        if (card.hidden) {
+            face.className = "card-face hidden" + (card.tier === 1 ? " gold" : card.tier === 0 ? " blue" : "");
+            face.textContent = "?";
+        } else {
+            face.className = "card-face" + (card.card != null ? (card.card <= 5 ? " blue" : " gold") : " special");
+            face.textContent = card.card != null ? String(card.card) : "—";
+        }
         reveal.appendChild(face);
     }
 }
