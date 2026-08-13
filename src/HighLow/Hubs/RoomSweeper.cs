@@ -21,9 +21,19 @@ public sealed class RoomSweeper : BackgroundService
         using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(500));
         while (await timer.WaitForNextTickAsync(ct))
         {
-            var closed = await _rooms.SweepAsync(_clock.UtcNow);
+            var now = _clock.UtcNow;
+
+            var closed = await _rooms.SweepAsync(now);
             foreach (var room in closed)
                 await _hub.Clients.Group(GameHub.RoomGroup(room.Code)).SendAsync("RoomClosed", room.Code, ct);
+
+            var rooms = await _rooms.GetRooms();
+            foreach (var room in rooms)
+            {
+                var events = await room.TickAsync(now);
+                foreach (var e in events)
+                    await _hub.Clients.Group(GameHub.RoomGroup(room.Code)).SendAsync(GameHub.SignalRName(e), e, ct);
+            }
         }
     }
 }
