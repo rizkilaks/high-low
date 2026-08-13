@@ -290,10 +290,12 @@ input {
   border-color: #fff;
 }
 
-.card-fan {
-  display: inline-flex; gap: 2px; align-items: center; justify-content: center;
+.scene-row {
+  display: flex; align-items: center; justify-content: center; flex-wrap: wrap;
 }
-.card-fan .card-face { margin-right: -24px; }
+.scene-labeled {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+}
 
 @keyframes hl-deal {
   0% { transform: translateY(-80px) rotate(-8deg); opacity: 0; }
