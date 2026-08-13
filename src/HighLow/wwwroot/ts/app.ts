@@ -13,6 +13,8 @@ import type {
     SpecialsRevealedEvent,
 } from "./protocol.js";
 import { applyEvent, applyView, initialState, submitOptimistic, type GameState } from "./state.js";
+import { bindGuide, openGuide, type GuideOrigin } from "./guide.js";
+import { bindPrimer, isFirstVisit, showPrimer } from "./primer.js";
 import {
     clearSelection, getPass, getReverse, getSelectedCard, onGiftChoice,
     renderLobbySeats, renderReveal, renderTable, setConnBanner, setPass, setReverse,
@@ -217,14 +219,40 @@ function wireButtons(): void {
             await conn.invoke("chooseGift", state.roomCode, state.myToken, target).catch(() => false);
         })();
     });
+
+    const guideBack = (origin: GuideOrigin) => {
+        if (origin === "table" || origin === "finished") showScreen("table");
+        else showScreen("lobby");
+    };
+    bindGuide(
+        el("btn-guide-prev") as HTMLButtonElement,
+        el("btn-guide-next") as HTMLButtonElement,
+        el("btn-guide-replay") as HTMLButtonElement,
+        el("btn-guide-back") as HTMLButtonElement,
+        guideBack,
+    );
+    el("btn-howto-lobby").addEventListener("click", () => { openGuide("lobby"); showScreen("guide"); });
+    el("btn-howto-table").addEventListener("click", () => { openGuide("table"); showScreen("guide"); });
+    el("btn-howto-finished").addEventListener("click", () => { openGuide("finished"); showScreen("guide"); });
+
+    bindPrimer(
+        el("btn-primer-skip") as HTMLButtonElement,
+        el("btn-primer-close") as HTMLButtonElement,
+        el("btn-primer-guide") as HTMLButtonElement,
+        () => { openGuide("lobby"); showScreen("guide"); },
+    );
+
+    el("btn-rematch").addEventListener("click", () => {
+        void (async () => {
+            if (!(await ensureStarted())) return;
+            await conn.invoke("rematch", state.roomCode, state.myToken).catch(() => false);
+        })();
+    });
 }
 
 async function boot(): Promise<void> {
-    if (!playerName) {
-        playerName = (window.prompt("Your name?") ?? "").trim();
-        if (!playerName) return;
-        localStorage.setItem(LS_NAME, playerName);
-    }
+    const nameInput = el("name-input") as HTMLInputElement;
+    if (playerName) nameInput.value = playerName;
 
     conn = new signalR.HubConnectionBuilder()
         .withUrl("/hubs/game")
@@ -236,7 +264,7 @@ async function boot(): Promise<void> {
     wireButtons();
 
     if (!(await ensureStarted())) {
-        toast("cannot connect — reload to retry");
+        toast("cannot connect, reload to retry");
         return;
     }
 
@@ -248,6 +276,9 @@ async function boot(): Promise<void> {
         await tryReconnect();
     } else {
         renderLobbySeats(state);
+        if (isFirstVisit()) {
+            window.setTimeout(() => showPrimer(() => renderLobbySeats(state)), 400);
+        }
     }
 
     setInterval(() => {

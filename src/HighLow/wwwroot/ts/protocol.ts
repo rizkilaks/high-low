@@ -53,6 +53,7 @@ export interface PublicCard {
     seat: number;
     card: number | null;
     hidden: boolean;
+    tier: number | null;
 }
 
 export interface CardsRevealedEvent {

@@ -22,18 +22,7 @@
     </div>
     <div id="lobby-code" class="hidden">Room code: <strong></strong></div>
     <div id="lobby-seats"></div>
-    <details id="howto">
-      <summary>How to play</summary>
-      <ol>
-        <li>9 rounds — the top 2 scores win.</li>
-        <li>Each round deals a point prize (+ or −). Everyone plays ONE card from their hand (1–10), within 60 seconds.</li>
-        <li>HIGHEST: closest <em>above</em> the prize wins. An odd number of Reverse cards flips the round to LOWEST: closest <em>below</em> wins.</li>
-        <li>Two players playing the same card value are both voided — only survivors can win. No survivors = no winner, prize burned.</li>
-        <li>Pass burns a card but keeps it hidden — you are forced to reveal next round. The round's start seat cannot pass.</li>
-        <li>Reverse: one per player for the whole game.</li>
-        <li>Negative prize with voided players: the winner may gift the negative to one of them.</li>
-      </ol>
-    </details>
+    <button id="btn-howto-lobby">How to play</button>
   </section>
 
   <section id="screen-table" class="hidden">
@@ -48,6 +37,7 @@
       <div id="direction"></div>
       <div id="winner-line"></div>
       <div id="countdown"></div>
+      <button id="btn-howto-table">?</button>
       <div id="event-log"></div>
       <button id="btn-start" class="hidden">Start with bots</button>
       <button id="btn-leave" class="hidden">Leave</button>
@@ -61,8 +51,41 @@
     <div id="hint"></div>
   </section>
 
+  <section id="screen-guide" class="hidden">
+    <div id="guide-head">
+      <button id="btn-guide-back">Back</button>
+      <h2>HOW TO PLAY</h2>
+      <span id="guide-step-label"></span>
+    </div>
+    <div id="guide-dots"></div>
+    <div id="guide-anim"></div>
+    <p id="guide-text"></p>
+    <div id="guide-nav">
+      <button id="btn-guide-prev">Prev</button>
+      <button id="btn-guide-replay">Replay</button>
+      <button id="btn-guide-next">Next</button>
+    </div>
+  </section>
+
   <div id="overlay-gift" class="overlay hidden"><h2>Gift the negative</h2><div id="gift-targets"></div></div>
-  <div id="overlay-finished" class="overlay hidden"><h2>Game over</h2><div id="finished-winners"></div><table id="finished-scores"></table></div>
+  <div id="overlay-finished" class="overlay hidden">
+    <h2>Game over</h2>
+    <div id="finished-winners"></div>
+    <table id="finished-scores"></table>
+    <div id="finished-actions">
+      <button id="btn-rematch">Rematch</button>
+      <button id="btn-howto-finished">Learn the rules</button>
+    </div>
+  </div>
+
+  <div id="primer" class="overlay hidden">
+    <div id="primer-anim"></div>
+    <div id="primer-actions" class="hidden">
+      <button id="btn-primer-guide">See the full guide</button>
+      <button id="btn-primer-close">Close</button>
+    </div>
+    <button id="btn-primer-skip">Skip</button>
+  </div>
 
   <script src="/lib/signalr/signalr.js"></script>
   <script type="module" src="/js/app.js"></script>
