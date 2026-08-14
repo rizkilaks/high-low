@@ -1,0 +1,33 @@
+# CodeRabbit review configuration
+# Docs: https://docs.coderabbit.ai/configuration
+language: en-US
+
+reviews:
+  profile: assertive
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: false
+  auto_review:
+    enabled: true
+    drafts: false
+    auto_incremental_review: true
+    auto_pause_after_reviewed_commits: 5
+  path_instructions:
+    - path: "**/*.ts"
+      instructions: |
+        Follow the project's TypeScript conventions: strict mode, no `any`, typed protocol records in
+        protocol.ts, camelCase client-facing event names.
+    - path: "src/HighLow/**"
+      instructions: |
+        Server-authoritative rules engine. All room mutations go through the per-room SemaphoreSlim gate.
+        Hidden information (opponent hands, hidden cards) must never be sent to clients. Use record-based
+        events pushed to the room group. Keep Random/IClock injectable for tests.
+    - path: "**/*.css"
+      instructions: |
+        Use CSS custom property tokens from ui-context.md only. No hardcoded hex values.
+        Follow the arena theme (dark only, gold/blue/red/silver tiers, Georgia serif for display).
+
+chat:
+  auto_reply: true
