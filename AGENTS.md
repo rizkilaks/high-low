@@ -20,4 +20,6 @@ This file is auto-read by coding agents on session start. Read the context files
 - Do not invent product behavior that is not defined in the context files.
 - PR descriptions and commit messages are written in neutral third person
   (what was fixed and why), never first person, never "the assistant did X".
-- Commits and PRs must not contain any agent/AI references.
+- Commits and PRs must not contain references to agents or AI tools (e.g. "fixed by
+  CodeRabbit", "the assistant"). References to required tooling and file names
+  (AGENTS.md, CodeRabbit config, GitHub Actions) are allowed where informative.

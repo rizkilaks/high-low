@@ -56,7 +56,8 @@ PR 16 (next): refactor `style.css` hardcoded hex values onto the tokens defined 
   leftover card is never dealt (matches the Guide's "one card is removed" story).
 - No accounts; per-seat token in localStorage; host token authorizes start; per-IP room cap.
 - Dark-only arena theme with tier accents (gold/blue/red/silver), serif display type.
-- Copy style: no hyphens, no arrows, neutral third-person PR/commit text.
+- Copy style: no hyphens or arrows in user-facing copy (e.g. the Guide); documentation
+  and context files may use hyphenated terminology (e.g. "third-person", "per-seat").
 
 ## Session Notes
 
