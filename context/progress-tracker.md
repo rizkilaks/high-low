@@ -4,12 +4,13 @@ Update this file after every meaningful implementation change.
 
 ## Current Phase
 
-Guide/UX polish complete. Live site deployed. Code quality tooling being added (CodeRabbit),
-then a CSS token refactor.
+Guide/UX polish complete. Live site deployed. Agent context system + independent PR
+review + CI lint gates being added; then a CSS token refactor.
 
 ## Current Goal
 
-PR 15: introduce the agent context system (this folder + root AGENTS.md) and CodeRabbit config.
+PR 15: introduce the agent context system (this folder + root AGENTS.md), remove the
+CodeRabbit integration, and document the independent PR review requirement.
 PR 16 (next): refactor `style.css` hardcoded hex values onto the tokens defined in `ui-context.md`.
 
 ## Completed
@@ -34,7 +35,8 @@ PR 16 (next): refactor `style.css` hardcoded hex values onto the tokens defined 
 
 ## In Progress
 
-- PR 15 (this): agent context system + `.coderabbit.yaml`. CodeRabbit app installed on the repo.
+- PR 15 (this): agent context system; CodeRabbit disposed (removed config + references);
+  independent agent PR review documented as the merge gate.
 
 ## Next Up
 
@@ -61,7 +63,7 @@ PR 16 (next): refactor `style.css` hardcoded hex values onto the tokens defined 
 
 ## Session Notes
 
-- CodeRabbit installed on the repo (free OSS plan, public repo). Config `.coderabbit.yaml`
-  is included in PR 15 so it is active from the first review. Install cannot be verified via
-  `gh` (needs app-token auth); proof is a CodeRabbit review on PR 15.
+- CodeRabbit was installed on the repo but disposed (paid Pro Plus trial — unnecessary for a
+  public repo; replaced by the independent agent PR review + free CI lint gates). The app must
+  still be uninstalled and the trial cancelled in the CodeRabbit dashboard.
 - Vault docs in the Obsidian vault are the historical archive; `context/` is the live spec.

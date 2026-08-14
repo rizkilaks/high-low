@@ -5,9 +5,9 @@
 - Keep modules small and single-purpose; a file should be understandable without its caller.
 - Fix root causes, do not layer workarounds; a guard in the shared function beats one in every caller.
 - Do not mix unrelated concerns in one commit or one PR.
-- No references to agents or AI tools in commits or PRs (e.g. "fixed by CodeRabbit",
-  "the assistant"). Required tooling and file names (AGENTS.md, CodeRabbit config,
-  GitHub Actions) are allowed where informative.
+- No references to agents or AI tools in commits or PRs (e.g. "fixed by the reviewer",
+  "the assistant"). Required tooling and file names (AGENTS.md, GitHub Actions) are
+  allowed where informative.
 - PR descriptions and commit messages are neutral third person: what changed and why.
 
 ## C# (src/HighLow)

@@ -27,12 +27,31 @@ If a change cannot be verified end to end quickly, the scope is too broad — sp
 - Branch per task from `main`: `feat/<slug>` | `ci/<slug>` | `build/<slug>` | `fix/<slug>` | `docs/<slug>`.
 - One PR per unit, base `main`. Conventional commits (`feat:`, `fix:`, `docs:`, `ci:`).
 - The user merges; do not merge or force-push. Squash-merge is used.
-- CodeRabbit reviews PRs automatically; triage its comments — fix real issues, dismiss false
-  positives — and report the outcome to the user.
 - Do not disclose private or sensitive operational details in code, commits, PRs, or
   docs — server IPs, credentials, keys, tokens, or personal data. Public service names,
   ports, hostnames, environment variables, and GitHub Secret indirection are allowed in
   architecture documentation.
+
+## Independent PR Review (required before merge)
+
+Every PR receives an independent, isolated code-quality and consistency review before it is
+offered for merge. This is the replacement for automated review bots.
+
+- **Independence:** a fresh subagent reviews the PR. It does not share the implementing
+  session's context, does not resume the implementer's task, and treats the implementer's
+  self-verification claims as unverified — it checks the actual diff.
+- **Isolation:** reviews only the PR's diff (`origin/main..HEAD`) against the context files
+  (`code-standards.md`, `architecture.md`, `ui-context.md`) as the quality bar.
+- **Focus — quality:** correctness against the invariants in `architecture.md` (hidden
+  information never leaves the server, per-room gate, root-cause fixes), dead code,
+  duplication, error handling that prevents data loss, edge cases.
+- **Focus — consistency:** conventions in `code-standards.md` (records/events, injectable
+  `Random`/`IClock`, TS strict and no `any`, camelCase client methods) and token usage per
+  `ui-context.md` (no hardcoded hex), naming, and file organization.
+- **Output:** verdict `APPROVED` / `REVISE` plus Critical / Important / Minor findings with
+  `file:line` and a one-line fix each. The reviewer does not modify anything.
+- **Loop:** the implementer triages findings — fixes real issues on the branch, dismisses
+  false positives — and reports the outcome to the user before the user merges.
 
 ## Handling Missing Requirements
 
