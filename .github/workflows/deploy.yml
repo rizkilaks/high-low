@@ -13,19 +13,16 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Pin VPS host key
-        run: |
-          mkdir -p ~/.ssh
-          printf '%s\n' '43.134.104.216 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIELZn+19PaND7kXpdlETDmUw6xivzfy/jgiWIKt4X3k7' >> ~/.ssh/known_hosts
       - name: Deploy to VPS
         env:
           VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_SSH_TARGET: ${{ secrets.VPS_SSH_TARGET }}
         run: |
           set -e
           umask 077
           trap 'rm -f ~/.ssh/deploy_key' EXIT
           printf '%s' "$VPS_SSH_KEY" | base64 -d > ~/.ssh/deploy_key
-          ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
-            -o LogLevel=ERROR ubuntu@43.134.104.216 false
+          ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new \
+            -o LogLevel=ERROR "$VPS_SSH_TARGET" false
       - name: Smoke check
         run: curl -sf --retry 10 --retry-connrefused --retry-delay 2 https://rlhighlow.duckdns.org:8443/readyz

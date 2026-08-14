@@ -11,7 +11,7 @@
 | Build      | Docker multi-stage + Dockerfile.caddy | Images for app and Caddy edge          |
 | Reverse proxy | Caddy + DuckDNS (on VPS)           | TLS on port 8443                       |
 | CI/CD      | GitHub Actions (`ci.yml`, `deploy.yml`) | Test/build on PR; deploy to VPS on main |
-| Hosting    | VPS `43.134.104.216`, Docker Compose  | `highlow` (8080) + `caddy` (8443)      |
+| Hosting    | VPS (SSH target via GitHub secret), Docker Compose | `highlow` (8080) + `caddy` (8443)      |
 
 ## System Boundaries
 
