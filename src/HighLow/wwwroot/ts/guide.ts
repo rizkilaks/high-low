@@ -4,7 +4,6 @@ export type GuideOrigin = "lobby" | "table" | "finished";
 
 let current = 0;
 let origin: GuideOrigin = "lobby";
-let onBack: ((origin: GuideOrigin) => void) | null = null;
 
 function el(id: string): HTMLElement {
     return document.getElementById(id)!;
@@ -39,7 +38,6 @@ export function bindGuide(
     backBtn: HTMLButtonElement,
     back: (origin: GuideOrigin) => void,
 ): void {
-    onBack = back;
     prevBtn.addEventListener("click", () => {
         if (current > 0) { current--; renderStep(); }
     });
