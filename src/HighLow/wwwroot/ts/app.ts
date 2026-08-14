@@ -12,7 +12,7 @@ import type {
     RoundStartedEvent,
     SpecialsRevealedEvent,
 } from "./protocol.js";
-import { applyEvent, applyView, initialState, submitOptimistic, type GameState } from "./state.js";
+import { applyEvent, applyView, initialState, submitOptimistic } from "./state.js";
 import { bindGuide, openGuide, type GuideOrigin } from "./guide.js";
 import { bindPrimer, isFirstVisit, showPrimer } from "./primer.js";
 import {

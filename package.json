@@ -2,8 +2,15 @@
   "name": "high-low-frontend",
   "private": true,
   "scripts": {
-    "build": "tsc && node scripts/copy-signalr.mjs"
+    "build": "tsc && node scripts/copy-signalr.mjs",
+    "lint": "eslint src/HighLow/wwwroot/ts --max-warnings 0 && stylelint \"src/HighLow/wwwroot/css/*.css\""
   },
   "dependencies": { "@microsoft/signalr": "^10.0.11" },
-  "devDependencies": { "typescript": "^5.6.0" }
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "eslint": "^9.0.0",
+    "typescript-eslint": "^8.0.0",
+    "stylelint": "^16.0.0",
+    "stylelint-config-standard": "^36.0.0"
+  }
 }

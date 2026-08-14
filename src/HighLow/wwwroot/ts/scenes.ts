@@ -4,7 +4,7 @@
 
 export type SceneBuilder = (root: HTMLElement) => void;
 
-let timers = new Set<number>();
+const timers = new Set<number>();
 
 function schedule(fn: () => void, ms: number): void {
     const t = window.setTimeout(fn, ms);
@@ -69,7 +69,9 @@ function revealSpecial(special: HTMLElement, spec: "Normal" | "Reverse", ms: num
 }
 
 function caption(text: string): HTMLElement {
-    return el("div", "scene-caption");
+    const c = el("div", "scene-caption");
+    c.textContent = text;
+    return c;
 }
 
 function stage(root: HTMLElement): HTMLElement {
@@ -98,14 +100,7 @@ function flipToBack(cardEl: HTMLElement, tier: "blue" | "gold", ms: number): voi
     }, ms);
 }
 
-function flipToFront(cardEl: HTMLElement, value: string, tier: "blue" | "gold", ms: number): void {
-    schedule(() => {
-        cardEl.textContent = value;
-        cardEl.className = `card-face ${tier} anim-flip`;
-    }, ms);
-}
-
-function cardRow(anim = "anim-deal", gap = 6): HTMLElement {
+function cardRow(gap = 6): HTMLElement {
     const row = el("div", "scene-row");
     row.style.gap = `${gap}px`;
     return row;
@@ -210,7 +205,7 @@ function sceneHand(root: HTMLElement): void {
 function sceneOddReverse(root: HTMLElement): void {
     const s = stage(root);
     s.style.flexDirection = "column";
-    const row = cardRow(undefined, 16);
+    const row = cardRow(16);
     const stacks = [
         playerStack(1, "2", "blue", "Normal", "anim-deal"),
         playerStack(2, "7", "gold", "Normal", "anim-deal"),
@@ -240,7 +235,7 @@ function label(text: string, anim = ""): HTMLElement {
 function sceneEvenReverse(root: HTMLElement): void {
     const s = stage(root);
     s.style.flexDirection = "column";
-    const row = cardRow(undefined, 16);
+    const row = cardRow(16);
     const stacks = [
         playerStack(1, "6", "gold", "Normal", "anim-deal"),
         playerStack(2, "3", "blue", "Reverse", "anim-deal"),
@@ -280,7 +275,7 @@ function sceneReverseOnce(root: HTMLElement): void {
 // 7 — starting player reveals, best wins
 function sceneReveal(root: HTMLElement): void {
     const s = stage(root);
-    const row = cardRow(undefined, 14);
+    const row = cardRow(14);
     const start = playerStack(1, "5", "blue", "Normal", "anim-flip");
     const c1 = playerStack(2, "2", "blue", "Normal", "anim-flip");
     const c2 = playerStack(3, "4", "blue", "Normal", "anim-flip");
@@ -298,7 +293,7 @@ function sceneReveal(root: HTMLElement): void {
 // 8 — pass, forced reveal
 function scenePass(root: HTMLElement): void {
     const s = stage(root);
-    const row = cardRow(undefined, 14);
+    const row = cardRow(14);
     const p1 = playerStack(1, "6", "gold", "Normal", "anim-deal");
     const p2 = playerStack(2, "3", "blue", "Normal", "anim-deal");
     const p3 = playerStack(3, "8", "gold", "Normal", "anim-deal");
@@ -312,7 +307,7 @@ function scenePass(root: HTMLElement): void {
 // 9 — overlap voids, next best wins; all void burns
 function sceneVoid(root: HTMLElement): void {
     const s = stage(root);
-    const row = cardRow(undefined, 14);
+    const row = cardRow(14);
     const v1 = playerStack(1, "7", "gold", "Normal", "anim-pop");
     const next = playerStack(2, "9", "gold", "Normal", "anim-pop");
     const v2 = playerStack(3, "7", "gold", "Normal", "anim-pop");
@@ -330,7 +325,7 @@ function sceneVoid(root: HTMLElement): void {
 function sceneGift(root: HTMLElement): void {
     const s = stage(root);
     s.style.flexDirection = "column";
-    const row = cardRow(undefined, 14);
+    const row = cardRow(14);
     const g = playerStack(1, "4", "blue", "Normal", "anim-pop");
     const target = playerStack(2, "4", "blue", "Normal", "anim-pop");
     delay(g.wrap, 600);
@@ -357,7 +352,7 @@ function sceneScores(root: HTMLElement): void {
     const s = stage(root);
     s.style.flexDirection = "column";
     s.style.gap = "16px";
-    const row = cardRow(undefined, 24);
+    const row = cardRow(24);
 
     const aCol = el("div", "scene-labeled");
     const aChip = el("span", "player-chip");
