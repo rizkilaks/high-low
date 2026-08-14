@@ -29,9 +29,10 @@ If a change cannot be verified end to end quickly, the scope is too broad — sp
 - The user merges; do not merge or force-push. Squash-merge is used.
 - CodeRabbit reviews PRs automatically; triage its comments — fix real issues, dismiss false
   positives — and report the outcome to the user.
-- Do not disclose private or operational details in code, commits, PRs, or docs — server
-  IPs, credentials, keys, tokens, or personal data. Use public hostnames, environment
-  variables, or GitHub secrets instead.
+- Do not disclose private or sensitive operational details in code, commits, PRs, or
+  docs — server IPs, credentials, keys, tokens, or personal data. Public service names,
+  ports, hostnames, environment variables, and GitHub Secret indirection are allowed in
+  architecture documentation.
 
 ## Handling Missing Requirements
 
